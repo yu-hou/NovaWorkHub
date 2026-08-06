@@ -130,28 +130,28 @@ export const BENEFIT_ROWS: BenefitRow[] = [
 
 export const FOUNDERS: Founder[] = [
   {
-    name: "黄叔",
-    photo: "/images/zhenganhuo/host-huangshu.jpg",
-    photoAlt: "黄叔头像",
+    name: "Nova Lin",
+    photo: "/images/nova/placeholder.svg",
+    photoAlt: "Nova Lin 头像",
     tone: "blue",
-    roles: ["YouMind Skill顾问", "360 AI产品顾问", "《Skill AI一人公司》作者"],
+    roles: ["Nova 产品主理人", "AI Agent 实战教练", "自动化工作流顾问"],
   },
   {
-    name: "唯庸",
-    photo: "/images/zhenganhuo/host-weiyong.jpg",
-    photoAlt: "唯庸头像",
+    name: "Nova Chen",
+    photo: "/images/nova/placeholder.svg",
+    photoAlt: "Nova Chen 头像",
     tone: "orange",
     roles: [
-      "前字节 AI 产品经理",
-      "AI企业智能化转型咨询师",
-      "AI编程与智能体培训讲师",
+      "Nova 技术主理人",
+      "智能体落地顾问",
+      "AI 编程与交付培训讲师",
     ],
   },
 ];
 
 export const PARTNERS: Partner[] = [
-  { name: "MiniMax", logo: "/images/zhenganhuo/minimax.webp" },
-  { name: "Flomo", logo: "/images/zhenganhuo/flomo.png" },
+  { name: "MiniMax", logo: "/images/nova/placeholder.svg" },
+  { name: "Flomo", logo: "/images/nova/placeholder.svg" },
 ];
 
 export const TICKER_TEXT =

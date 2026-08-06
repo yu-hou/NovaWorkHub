@@ -66,8 +66,8 @@ export function PaymentModal({ open, onClose }: PaymentModalProps) {
         <div className="payment-qr-image-wrap">
           <img
             className="payment-qr-image"
-            src="/images/zhenganhuo/annual-pass-modal-qr.png"
-            alt="年度通票付款二维码"
+            src="/images/nova/placeholder.svg"
+            alt="年度通票付款二维码占位"
           />
         </div>
       </div>

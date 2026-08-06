@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { LoginForm } from "@/components/home/LoginForm";
+
 type LoginModalProps = {
   open: boolean;
   title?: string;
@@ -58,29 +60,10 @@ export function LoginModal({
         </div>
         <div>
           <div className="login-modal-mount">
-            <section className="login-card">
-              <h2>邮箱登录</h2>
-              <p className="sub">登录后可打开课程、激活权益和领取福利。</p>
-              <div className="form-grid mt-12">
-                <div>
-                  <label htmlFor="modalLoginEmail">邮箱地址</label>
-                  <input
-                    id="modalLoginEmail"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="name@example.com"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.alert("演示环境：验证码未发送。");
-                  }}
-                >
-                  发送验证码
-                </button>
-              </div>
-            </section>
+            <LoginForm
+              title="邮箱登录"
+              onSuccess={onClose}
+            />
           </div>
         </div>
       </div>

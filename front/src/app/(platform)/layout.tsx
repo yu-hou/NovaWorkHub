@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import "../home.css";
 
 export const metadata: Metadata = {
-  title: "AgentWork 学习平台",
+  title: "Nova 学习平台",
   description:
-    "AgentWork 社群成员学习平台，集中访问 AI 课程、实战案例、共学活动和会员福利。",
+    "Nova 社群成员学习平台，集中访问 AI 课程、实战案例、共学活动和会员福利。",
 };
 
 export default function PlatformLayout({

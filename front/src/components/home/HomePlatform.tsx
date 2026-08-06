@@ -2,7 +2,7 @@
 
 import { HomeBannerCarousel } from "@/components/home/HomeBannerCarousel";
 import { HomeBenefitsGrid } from "@/components/home/HomeBenefitsGrid";
-import { HomeLearningGrid } from "@/components/home/HomeLearningGrid";
+import { HomeRecommendedCourses } from "@/components/home/HomeRecommendedCourses";
 import { PlatformShell } from "@/components/home/PlatformShell";
 
 export function HomePlatform() {
@@ -10,7 +10,7 @@ export function HomePlatform() {
     <PlatformShell>
       <section className="view" id="pageHome">
         <HomeBannerCarousel />
-        <HomeLearningGrid />
+        <HomeRecommendedCourses />
         <HomeBenefitsGrid />
       </section>
     </PlatformShell>

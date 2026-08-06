@@ -34,7 +34,7 @@ export function CommunitySection() {
         </div>
         <div className="l-host-body">
           <span className="eyebrow">HOW WE RUN</span>
-          <h3>让 AI 真正干活</h3>
+          <h3>点亮 AI，做出结果</h3>
           <p className="l-host-lines">
             <span>嫁接技术、需求与场景。</span>
             <span>发现真需求、解决真问题以及真的解决问题。</span>
@@ -53,7 +53,7 @@ export function CommunitySection() {
         </div>
       </div>
       <div className="l-host-cta">
-        <h3>加入 AgentWork，和一群人一起把 AI 用起来</h3>
+        <h3>加入 Nova，和一群人一起把 AI 用起来</h3>
         <p>
           进入学习平台后，可浏览公开课、了解会员权益，并按自己的节奏参与课程、活动和资源兑换。
         </p>

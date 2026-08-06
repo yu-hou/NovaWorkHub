@@ -1,8 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useContentGate } from "@/components/auth/ContentGate";
 import { LearnersIcon, ViewsIcon } from "@/components/home/home-icons";
+import { mediaUrl } from "@/lib/api";
 import type { ListPageContent, PlatformCard } from "@/lib/platform-content";
 
 type ContentListViewProps = {
@@ -10,6 +14,7 @@ type ContentListViewProps = {
   content: ListPageContent;
   variant?: "course" | "content" | "benefit";
   filterLabel?: string;
+  unavailable?: boolean;
 };
 
 function matchesSearch(card: PlatformCard, q: string) {
@@ -23,6 +28,7 @@ export function ContentListView({
   content,
   variant = "content",
   filterLabel = "筛选",
+  unavailable = false,
 }: ContentListViewProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
@@ -53,6 +59,14 @@ export function ContentListView({
 
   const activeChipLabel =
     categoryCounts.find((c) => c.value === category)?.label ?? "全部";
+
+  if (unavailable) {
+    return (
+      <section className="view" id={pageId}>
+        <p className="empty-state">暂未开放，敬请期待。</p>
+      </section>
+    );
+  }
 
   return (
     <section className="view" id={pageId}>
@@ -147,16 +161,32 @@ function ContentCardItem({
   card: PlatformCard;
   variant: "course" | "content";
 }) {
+  const router = useRouter();
+  const { isLoggedIn, isMember } = useAuth();
+  const { openLogin, openMemberGate } = useContentGate();
+
   const onAction = () => {
-    if (card.href && !card.locked) {
-      window.open(card.href, "_blank", "noopener,noreferrer");
+    if (variant !== "course") {
+      window.alert("暂未开放，敬请期待。");
       return;
     }
-    window.alert(
-      card.locked
-        ? "演示环境：会员专享内容需登录后查看。"
-        : "演示环境：请登录后查看课程详情。",
-    );
+
+    if (!isLoggedIn) {
+      openLogin("登录后查看课程详情");
+      return;
+    }
+
+    if (card.cta === "会员专享" || (card.locked && !isMember)) {
+      openMemberGate();
+      return;
+    }
+
+    const href = card.href || (card.id ? `/learning/course?id=${card.id}` : null);
+    if (href) {
+      router.push(href);
+      return;
+    }
+    window.alert("课程详情暂不可用。");
   };
 
   return (
@@ -164,7 +194,7 @@ function ContentCardItem({
       className={`content-card${variant === "course" ? " course-card" : ""}`}
     >
       <div className="card-cover">
-        {card.cover ? <img src={card.cover} alt="" /> : null}
+        {card.cover ? <img src={mediaUrl(card.cover)} alt="" /> : null}
       </div>
       <div className="card-body">
         <div className="item-title">
@@ -215,7 +245,7 @@ function BenefitCardItem({ card }: { card: PlatformCard }) {
   return (
     <article className="content-card benefit-card">
       <div className="card-cover">
-        {card.cover ? <img src={card.cover} alt="" /> : null}
+        {card.cover ? <img src={mediaUrl(card.cover)} alt="" /> : null}
       </div>
       <div className="card-body">
         <div className="item-title">
@@ -246,20 +276,10 @@ function BenefitCardItem({ card }: { card: PlatformCard }) {
             {card.stock ? <span className="benefit-stock">{card.stock}</span> : null}
           </div>
           <div className="benefit-actions">
-            {card.instructionsHref ? (
-              <a
-                className="text-button"
-                href={card.instructionsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                兑换说明
-              </a>
-            ) : null}
             <button
               type="button"
               onClick={() => {
-                window.alert("演示环境：领取福利需登录后使用。");
+                window.alert("暂未开放，敬请期待。");
               }}
             >
               {card.cta}

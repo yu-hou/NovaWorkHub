@@ -1,0 +1,2 @@
+-- Seed data is part of the initial migration so remote and local environments match.
+-- Keep this file for `supabase db reset`, which expects a configured seed path.

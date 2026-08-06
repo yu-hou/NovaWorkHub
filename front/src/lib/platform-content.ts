@@ -109,7 +109,7 @@ export const LEARNING_PAGE: ListPageContent = {
       "cover": "/images/zhenganhuo/platform/courses/20260704011901-e1f8c89b3c37a12d.png",
       "learners": "143",
       "views": "512",
-      "href": "https://www.zhenganhuo.com/learning/course/5",
+      "href": "#",
       "cta": "查看课程",
       "locked": false
     },
@@ -122,7 +122,7 @@ export const LEARNING_PAGE: ListPageContent = {
       "cover": "/images/zhenganhuo/platform/courses/20260702021804-23eff75c1282352a.jpg",
       "learners": "101",
       "views": "1,080",
-      "href": "https://www.zhenganhuo.com/learning/course/1",
+      "href": "#",
       "cta": "查看课程",
       "locked": false
     },
@@ -135,7 +135,7 @@ export const LEARNING_PAGE: ListPageContent = {
       "cover": "/images/zhenganhuo/platform/courses/20260709182916-9aef42664d538784.png",
       "learners": "130",
       "views": "1,195",
-      "href": "https://www.zhenganhuo.com/learning/course/6",
+      "href": "#",
       "cta": "查看课程",
       "locked": false
     },
@@ -148,7 +148,7 @@ export const LEARNING_PAGE: ListPageContent = {
       "cover": "/images/zhenganhuo/platform/courses/20260702024718-0c62fad9ef1e8817.jpg",
       "learners": "61",
       "views": "616",
-      "href": "https://www.zhenganhuo.com/learning/course/4",
+      "href": "#",
       "cta": "查看课程",
       "locked": false
     },
@@ -161,7 +161,7 @@ export const LEARNING_PAGE: ListPageContent = {
       "cover": "/images/zhenganhuo/platform/courses/20260702024125-6afb170b465be54d.jpg",
       "learners": "44",
       "views": "367",
-      "href": "https://www.zhenganhuo.com/learning/course/2",
+      "href": "#",
       "cta": "查看课程",
       "locked": false
     },
@@ -174,7 +174,7 @@ export const LEARNING_PAGE: ListPageContent = {
       "cover": "/images/zhenganhuo/platform/courses/20260702024259-0507cce3ca683f52.jpg",
       "learners": "83",
       "views": "730",
-      "href": "https://www.zhenganhuo.com/learning/course/3",
+      "href": "#",
       "cta": "查看课程",
       "locked": false
     }
@@ -364,7 +364,7 @@ export const BENEFITS_PAGE: ListPageContent = {
       "priceLabel": "10",
       "priceUnit": "积分",
       "stock": "库存 45",
-      "instructionsHref": "https://www.zhenganhuo.com/reader/other/rac587001cc78",
+      "instructionsHref": "#",
       "claimId": "3"
     },
     {
@@ -401,56 +401,56 @@ export const LEARNING_PATHS: LearningPath[] = [
         "category": "社群使用说明书",
         "categoryClass": "category-cyan",
         "title": "登录、激活与接入社群 Token Rank",
-        "href": "https://www.zhenganhuo.com/reader/course/rbb7d06273d34"
+        "href": "#"
       },
       {
         "index": "02",
         "category": "社群使用说明书",
         "categoryClass": "category-cyan",
-        "title": "认识 AgentWork",
-        "href": "https://www.zhenganhuo.com/reader/course/r406184de9dc0"
+        "title": "认识 Nova",
+        "href": "#"
       },
       {
         "index": "03",
         "category": "小白 AI 通识",
         "categoryClass": "category-gold",
         "title": "小白如何开始使用 AI",
-        "href": "https://www.zhenganhuo.com/reader/course/r500bc716f9ec"
+        "href": "#"
       },
       {
         "index": "04",
         "category": "小白 AI 通识",
         "categoryClass": "category-gold",
         "title": "提示词的本质",
-        "href": "https://www.zhenganhuo.com/reader/course/r68e57883a829"
+        "href": "#"
       },
       {
         "index": "05",
         "category": "小白 AI 通识",
         "categoryClass": "category-gold",
         "title": "大模型的优势与缺陷",
-        "href": "https://www.zhenganhuo.com/reader/course/r8afa431b2ee6"
+        "href": "#"
       },
       {
         "index": "06",
         "category": "小白 AI 通识",
         "categoryClass": "category-gold",
         "title": "AI 产品的本质",
-        "href": "https://www.zhenganhuo.com/reader/course/ra46aacf320ab"
+        "href": "#"
       },
       {
         "index": "07",
         "category": "小白 AI 通识",
         "categoryClass": "category-gold",
         "title": "什么是 AI 智能体",
-        "href": "https://www.zhenganhuo.com/reader/course/r50a088e8084f"
+        "href": "#"
       },
       {
         "index": "08",
         "category": "小白 AI 通识",
         "categoryClass": "category-gold",
         "title": "最常见的 AI 智能体：联网搜索",
-        "href": "https://www.zhenganhuo.com/reader/course/ra98db9dfcd36"
+        "href": "#"
       }
     ]
   },
@@ -466,28 +466,28 @@ export const LEARNING_PATHS: LearningPath[] = [
         "category": "Codex 从小白到专家",
         "categoryClass": "category-violet",
         "title": "你已经在用 Agent 了",
-        "href": "https://www.zhenganhuo.com/reader/course/redc4d09930fe"
+        "href": "#"
       },
       {
         "index": "02",
         "category": "Codex 从小白到专家",
         "categoryClass": "category-violet",
         "title": "桌面端 App 入门教程",
-        "href": "https://www.zhenganhuo.com/reader/course/rf33dc018da53"
+        "href": "#"
       },
       {
         "index": "03",
         "category": "Codex 从小白到专家",
         "categoryClass": "category-violet",
         "title": "Codex 入门：整理电脑",
-        "href": "https://www.zhenganhuo.com/reader/course/rb7a642518b41"
+        "href": "#"
       },
       {
         "index": "04",
         "category": "Codex 从小白到专家",
         "categoryClass": "category-violet",
         "title": "Agent First：重新设计工作流",
-        "href": "https://www.zhenganhuo.com/reader/course/r433c7de70c63"
+        "href": "#"
       }
     ]
   },
@@ -503,56 +503,56 @@ export const LEARNING_PATHS: LearningPath[] = [
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "YouMind 入门教程",
-        "href": "https://www.zhenganhuo.com/reader/course/ree1985e82381"
+        "href": "#"
       },
       {
         "index": "02",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "使用 YouMind + Skill 高效创造内容",
-        "href": "https://www.zhenganhuo.com/reader/course/rb939728739aa"
+        "href": "#"
       },
       {
         "index": "03",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "Claude Code 极简入门三部曲",
-        "href": "https://www.zhenganhuo.com/reader/course/ra0b7ef169ddf"
+        "href": "#"
       },
       {
         "index": "04",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "Claude Agent Skills 原理入门",
-        "href": "https://www.zhenganhuo.com/reader/course/r16ed3daad111"
+        "href": "#"
       },
       {
         "index": "05",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "一个提示词，生成你的专属 Skill",
-        "href": "https://www.zhenganhuo.com/reader/course/r0bd808753fc5"
+        "href": "#"
       },
       {
         "index": "06",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "生成匹配你文风的三篇短文",
-        "href": "https://www.zhenganhuo.com/reader/course/rf5b42244459f"
+        "href": "#"
       },
       {
         "index": "07",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "基于内容选题产出口播稿",
-        "href": "https://www.zhenganhuo.com/reader/course/rc01909bdbb4e"
+        "href": "#"
       },
       {
         "index": "08",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "基于口播稿完成视频创作",
-        "href": "https://www.zhenganhuo.com/reader/course/r67ca0ee73749"
+        "href": "#"
       }
     ]
   },
@@ -568,49 +568,49 @@ export const LEARNING_PATHS: LearningPath[] = [
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "结构化提示词 1：生成社群周报",
-        "href": "https://www.zhenganhuo.com/reader/course/r46d27d2abc83"
+        "href": "#"
       },
       {
         "index": "02",
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "结构化提示词 2：提取并改写文案",
-        "href": "https://www.zhenganhuo.com/reader/course/re80ee7cae68b"
+        "href": "#"
       },
       {
         "index": "03",
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "n8n 自动抓取指定公众号内容（上）",
-        "href": "https://www.zhenganhuo.com/reader/course/rc9fe6e25a96a"
+        "href": "#"
       },
       {
         "index": "04",
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "n8n 自动改写并发布（下）",
-        "href": "https://www.zhenganhuo.com/reader/course/rb3895d6208fd"
+        "href": "#"
       },
       {
         "index": "05",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "内容选题：抓取微信公众号文章",
-        "href": "https://www.zhenganhuo.com/reader/course/r9117e3bd0767"
+        "href": "#"
       },
       {
         "index": "06",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "基于内容选题产出口播稿",
-        "href": "https://www.zhenganhuo.com/reader/course/rc01909bdbb4e"
+        "href": "#"
       },
       {
         "index": "07",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "OpenClaw + Skill 直出公众号文章",
-        "href": "https://www.zhenganhuo.com/reader/course/rd333b63fcfb7"
+        "href": "#"
       }
     ]
   },
@@ -626,28 +626,28 @@ export const LEARNING_PATHS: LearningPath[] = [
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "四件套入门 + 上线第一个网站",
-        "href": "https://www.zhenganhuo.com/reader/course/r7dd1f9b096a9"
+        "href": "#"
       },
       {
         "index": "02",
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "一套提示词覆盖大部分 Vibe Coding 场景",
-        "href": "https://www.zhenganhuo.com/reader/course/rc343606f9953"
+        "href": "#"
       },
       {
         "index": "03",
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "用 SeeDream 4.0 做小红书图片生成网站",
-        "href": "https://www.zhenganhuo.com/reader/course/r94f74e8bb37f"
+        "href": "#"
       },
       {
         "index": "04",
         "category": "AI 编程",
         "categoryClass": "category-green",
         "title": "接入 Supabase，完成登录注册 + 积分",
-        "href": "https://www.zhenganhuo.com/reader/course/racd5fb720051"
+        "href": "#"
       }
     ]
   },
@@ -663,49 +663,49 @@ export const LEARNING_PATHS: LearningPath[] = [
         "category": "Codex 从小白到专家",
         "categoryClass": "category-violet",
         "title": "你已经在用 Agent 了",
-        "href": "https://www.zhenganhuo.com/reader/course/redc4d09930fe"
+        "href": "#"
       },
       {
         "index": "02",
         "category": "AI 智能体串讲",
         "categoryClass": "category-cyan",
         "title": "Agent 智能体简要介绍",
-        "href": "https://www.zhenganhuo.com/reader/course/r500f5ae7fbc6"
+        "href": "#"
       },
       {
         "index": "03",
         "category": "AI 智能体串讲",
         "categoryClass": "category-cyan",
         "title": "Agent Skills 介绍",
-        "href": "https://www.zhenganhuo.com/reader/course/r29529dde6cbf"
+        "href": "#"
       },
       {
         "index": "04",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "一个提示词，生成你的专属 Skill",
-        "href": "https://www.zhenganhuo.com/reader/course/r0bd808753fc5"
+        "href": "#"
       },
       {
         "index": "05",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "使用 Claude Code 分析微信聊天记录",
-        "href": "https://www.zhenganhuo.com/reader/course/r97eadc98712c"
+        "href": "#"
       },
       {
         "index": "06",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "本地定时运行 Skills",
-        "href": "https://www.zhenganhuo.com/reader/course/r1abd07f0f86b"
+        "href": "#"
       },
       {
         "index": "07",
         "category": "AI Skills",
         "categoryClass": "category-rose",
         "title": "Agent Team 多 Agent 工作 + 自进化",
-        "href": "https://www.zhenganhuo.com/reader/course/r62aa845a8112"
+        "href": "#"
       }
     ]
   }
@@ -1106,9 +1106,9 @@ export const TOKEN_RANK = {
 
 export const ABOUT_CARDS = [
   {
-    title: "关于 AgentWork",
+    title: "关于 Nova",
     titleTag: "h1" as const,
-    body: "AgentWork 面向 AI 工具、自动化工作流和实战项目学习。课程内容、案例复盘、活动回放和会员福利会逐步沉淀在这个系统里。",
+    body: "Nova 面向 AI 工具、自动化工作流和实战项目学习。课程内容、案例复盘、活动回放和会员福利会逐步沉淀在这个系统里。",
   },
   {
     title: "访问规则",
@@ -1118,6 +1118,6 @@ export const ABOUT_CARDS = [
   {
     title: "问题反馈",
     titleTag: "h3" as const,
-    body: "系统使用遇到问题，可以联系唯庸进行 bug 提交。v：wangweiyong0219",
+    body: "系统使用遇到问题，可以联系 Nova 支持团队反馈。",
   },
 ] as const;

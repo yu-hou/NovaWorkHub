@@ -36,14 +36,12 @@ export function HomeBannerCarousel() {
                 <img src={slide.image} alt="" />
               </div>
               <div className="home-banner-copy">
-                <span className="eyebrow">AgentWork</span>
+                <span className="eyebrow">Nova</span>
                 <h2>{slide.title}</h2>
                 <p>{slide.description}</p>
                 <a
                   className="home-banner-link"
                   href={slide.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   tabIndex={i === index ? 0 : -1}
                 >
                   {slide.cta}
@@ -80,8 +78,6 @@ export function HomeBannerCarousel() {
             key={card.title}
             className="home-side-card has-image"
             href={card.href}
-            target={card.href.startsWith("http") ? "_blank" : undefined}
-            rel={card.href.startsWith("http") ? "noopener noreferrer" : undefined}
             style={{
               ["--home-side-card-bg" as string]: `url('${card.image}')`,
             }}

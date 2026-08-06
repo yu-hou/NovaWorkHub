@@ -2,15 +2,16 @@
 
 import { usePathname } from "next/navigation";
 
+import { useAuth } from "@/components/auth/AuthProvider";
 import {
   NavCourseIcon,
+  NavGiftIcon,
   NavHomeIcon,
   NavMoreIcon,
   NavPathIcon,
-  NavRankIcon,
 } from "@/components/home/home-icons";
 
-const ITEMS = [
+const BASE_ITEMS = [
   { href: "/home", label: "首页", match: "/home", Icon: NavHomeIcon },
   {
     href: "/learning-paths",
@@ -19,21 +20,28 @@ const ITEMS = [
     Icon: NavPathIcon,
   },
   { href: "/learning", label: "课程", match: "/learning", Icon: NavCourseIcon },
-  {
-    href: "/token-rank",
-    label: "Token",
-    match: "/token-rank",
-    Icon: NavRankIcon,
-  },
-  { href: "/about", label: "更多", match: "/about", Icon: NavMoreIcon, more: true },
+  { href: "/benefits", label: "福利", match: "/benefits", Icon: NavGiftIcon },
 ] as const;
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { isLoggedIn } = useAuth();
+  const items = [
+    ...BASE_ITEMS,
+    isLoggedIn
+      ? {
+          href: "/account/security",
+          label: "账户",
+          match: "/account/security",
+          Icon: NavMoreIcon,
+          more: true,
+        }
+      : { href: "/login", label: "登录", match: "/login", Icon: NavMoreIcon, more: true },
+  ];
 
   return (
     <nav className="mobile-bottom-nav" aria-label="移动端主导航">
-      {ITEMS.map((item) => {
+      {items.map((item) => {
         const active =
           pathname === item.match ||
           (item.match !== "/home" && pathname.startsWith(`${item.match}/`));

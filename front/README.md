@@ -1,56 +1,44 @@
-# AgentWork Website
+# Nova Website
 
-AgentWork 官网与学习平台前端，基于 Next.js App Router。
+Nova 官网与学习平台前端：Next.js 16 / React 19 / TypeScript / Supabase。
 
-## 技术栈
+## 本地配置
 
-- Next.js 16（App Router）+ React 19 + TypeScript
-- Tailwind CSS v4 + shadcn/ui
-- Lucide React
+复制 `.env.example` 为 `.env.local`：
 
-## 本地运行
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+```
 
 ```bash
 npm install
 npm run dev
 ```
 
-默认访问 [http://localhost:3000](http://localhost:3000)。
+## 检查与构建
 
-## 常用命令
-
-| 命令 | 说明 |
-| --- | --- |
-| `npm run dev` | 开发服务器 |
-| `npm run build` | 生产构建 |
-| `npm run start` | 启动生产服务 |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript 检查 |
-| `npm run check` | lint + typecheck + build |
-
-## 主要路由
-
-| 路径 | 说明 |
-| --- | --- |
-| `/` | 官网落地页 |
-| `/home` | 学习平台首页 |
-| `/learning-paths` | 学习路径 |
-| `/learning` | 课程列表 |
-| `/events` | 活动 |
-| `/cases` | 案例 |
-| `/replays` | 直播回放 |
-| `/benefits` | 会员福利 |
-| `/token-rank` | Token 排行榜 |
-| `/about` | 关于 |
-
-## 目录结构
-
+```bash
+npm run check
 ```
-src/
-  app/           # 路由与全局样式
-  components/    # 页面组件
-  lib/           # 内容数据与工具
-public/
-  images/        # 静态图片
-  seo/           # Favicon 等
+
+静态产物输出到 `out/`。动态课程使用 `/learning/course?id=<id>`，因此后台新增课程不需要重新生成动态路径。
+
+## Cloudflare Pages
+
+```bash
+npm run pages:deploy
 ```
+
+Pages 项目名：`nova-academy`。生产构建变量必须配置：
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+## 已实现
+
+- Supabase 邮箱 OTP / 密码登录
+- 公开与会员课程权限
+- 用户、分类、课程管理
+- 课程封面压缩与 Supabase Storage 上传
+- Cloudflare Pages 静态部署

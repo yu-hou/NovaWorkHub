@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { LEARNING_PLATFORM_HREF } from "@/lib/landing-content";
 
 const NAV_LINKS = [
@@ -48,16 +50,12 @@ export function LandingNav() {
       }
     >
       <div className="landing-nav-inner">
-        <a className="landing-logo" href="/">
+        <Link className="landing-logo" href="/">
           <span className="brand-mark" aria-hidden="true">
-            <img src="/images/zhenganhuo/logo1.png" alt="" />
+            <img src="/images/nova/logo-mark.svg" alt="" />
           </span>
-          <img
-            className="brand-wordmark"
-            src="/images/zhenganhuo/logo2.png"
-            alt="AgentWork"
-          />
-        </a>
+          <span className="brand-wordmark-text">Nova</span>
+        </Link>
         <nav className="landing-links" aria-label="官网导航">
           {NAV_LINKS.map((link) => (
             <a key={link.href} href={link.href}>
@@ -66,6 +64,7 @@ export function LandingNav() {
           ))}
         </nav>
         <div className="landing-nav-cta">
+          <ThemeToggle />
           <a className="button-link" href={LEARNING_PLATFORM_HREF}>
             进入学习平台
           </a>

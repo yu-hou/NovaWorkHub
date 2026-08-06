@@ -15,15 +15,11 @@ export function LandingFooter() {
       <div className="landing-footer-inner">
         <div className="landing-foot-brand">
           <span className="brand-mark" aria-hidden="true">
-            <img src="/images/zhenganhuo/logo1.png" alt="" />
+            <img src="/images/nova/logo-mark.svg" alt="" />
           </span>
           <div>
             <strong>
-              <img
-                className="brand-wordmark"
-                src="/images/zhenganhuo/logo2.png"
-                alt="AgentWork"
-              />
+              <span className="brand-wordmark-text">Nova</span>
             </strong>
           </div>
         </div>
@@ -35,7 +31,7 @@ export function LandingFooter() {
           ))}
         </nav>
       </div>
-      <p className="landing-copy">© 2026 AgentWork</p>
+      <p className="landing-copy">© 2026 Nova</p>
     </footer>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 
+import { ContentGateProvider } from "@/components/auth/ContentGate";
 import { AppSidebar } from "@/components/home/AppSidebar";
 import { MobileBottomNav } from "@/components/home/MobileBottomNav";
 
@@ -18,13 +19,13 @@ export function PlatformShell({ children }: PlatformShellProps) {
   }, []);
 
   return (
-    <>
+    <ContentGateProvider>
       <div className="bg-cosmos" aria-hidden="true" />
       <div className="app-shell">
         <AppSidebar />
         <main className="main-panel">{children}</main>
         <MobileBottomNav />
       </div>
-    </>
+    </ContentGateProvider>
   );
 }

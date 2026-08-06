@@ -10,7 +10,7 @@ export function HeroSection({ onOpenPayment }: HeroSectionProps) {
     <section className="lhero">
       <div className="lhero-glow" aria-hidden="true" />
       <div className="lhero-inner">
-        <span className="eyebrow">AgentWork AI Agent 实战学习社群</span>
+        <span className="eyebrow">Nova AI Agent 实战学习社群</span>
         <h1 className="lhero-title">
           跨过 AI 学习门槛，
           <br />
@@ -33,11 +33,11 @@ export function HeroSection({ onOpenPayment }: HeroSectionProps) {
       <div className="lhero-marquee" aria-hidden="true">
         <div className="lhero-marquee-track">
           <span className="marquee-sequence">
-            AGENTWORK<span className="marquee-sep">·</span>AGENTWORK
+            NOVA<span className="marquee-sep">·</span>NOVA
             <span className="marquee-sep">·</span>
           </span>
           <span className="marquee-sequence">
-            AGENTWORK<span className="marquee-sep">·</span>AGENTWORK
+            NOVA<span className="marquee-sep">·</span>NOVA
             <span className="marquee-sep">·</span>
           </span>
         </div>
@@ -52,14 +52,14 @@ export function HeroSection({ onOpenPayment }: HeroSectionProps) {
       <div className="lhero-media" id="membership">
         <img
           className="membership-card-art"
-          src="/images/zhenganhuo/card.png"
+          src="/images/nova/placeholder.svg"
           alt=""
           aria-hidden="true"
         />
         <div className="lhero-media-copy">
           <span className="eyebrow">ANNUAL ALL-ACCESS PASS</span>
           <h2>解锁 0-1 全套 AI 学习课程与场景落地案例库、会员专享福利</h2>
-          <p>权益说明及解释权归 AgentWork 所有</p>
+          <p>权益说明及解释权归 Nova 所有</p>
           <div className="landing-pass-actions">
             <button
               className="button-link landing-pay-button"

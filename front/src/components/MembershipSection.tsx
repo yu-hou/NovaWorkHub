@@ -53,8 +53,8 @@ export function MembershipSection() {
           <div className="membership-poster-frame">
             <img
               className="membership-poster-image"
-              src="/images/zhenganhuo/annual-pass-poster.jpg"
-              alt="Agent 实战社群年度通票海报"
+              src="/images/nova/placeholder.svg"
+              alt="Nova 年度通票海报"
             />
           </div>
           <p>
