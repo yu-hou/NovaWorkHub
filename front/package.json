@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "pages:preview": "wrangler pages dev out",
     "pages:deploy": "npm run build && wrangler pages deploy out --project-name nova-academy",
     "lint": "eslint",
