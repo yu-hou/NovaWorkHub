@@ -93,7 +93,14 @@ async function invoke<T>(name: string, body: Record<string, unknown>): Promise<T
       throw new ApiError(status, error.message);
     }
   }
-  throw new ApiError(400, error.message);
+  const message = error.message || "请求失败";
+  if (/Failed to send a request to the Edge Function/i.test(message)) {
+    throw new ApiError(
+      502,
+      `无法调用云函数 ${name}。请确认该 Edge Function 已部署到当前 Supabase 项目`,
+    );
+  }
+  throw new ApiError(400, message);
 }
 
 async function currentAccess() {

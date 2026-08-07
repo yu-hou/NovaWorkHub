@@ -145,7 +145,25 @@ function loadFeishuSdk() {
 }
 
 function signaturePageUrl() {
-  return `${window.location.origin}${window.location.pathname}`;
+  // 必须与飞书校验的当前页 URL 一致：含 query，不含 hash
+  return window.location.href.split("#")[0];
+}
+
+function formatAuthError(error: unknown) {
+  if (error == null) return "飞书文档鉴权失败";
+  if (typeof error === "string") return `飞书文档鉴权失败：${error}`;
+  if (typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const code = record.errorCode ?? record.code ?? record.errno;
+    const message =
+      record.errorMessage ?? record.message ?? record.msg ?? record.error;
+    const parts = [
+      code != null ? `code=${String(code)}` : "",
+      message != null ? String(message) : "",
+    ].filter(Boolean);
+    if (parts.length) return `飞书文档鉴权失败（${parts.join("，")}）`;
+  }
+  return "飞书文档鉴权失败";
 }
 
 export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
@@ -234,11 +252,19 @@ export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
             jsApiList: auth.jsApiList,
             locale: auth.locale || "zh-CN",
           },
-          onAuthError: () => {
-            failToFallback("飞书文档鉴权失败，已切换为外链打开。");
+          onAuthError: (error) => {
+            const detail = formatAuthError(error);
+            const hint = /public_key|key_meta|Scope denied|code\s*=?\s*9/i.test(
+              detail,
+            )
+              ? "多为应用缺少「查看、评论、编辑和管理云空间中所有文件」(drive:drive) 应用身份权限；开通并发布版本后重试。文档协作者可仍为只读。"
+              : "请确认开放平台已配置当前站点为「H5 可信域名」。";
+            failToFallback(`${detail}。${hint} 已切换为外链打开。`);
           },
-          onError: () => {
-            failToFallback("飞书文档加载出错，已切换为外链打开。");
+          onError: (error) => {
+            failToFallback(
+              `${formatAuthError(error).replace("鉴权失败", "加载出错")}。已切换为外链打开。`,
+            );
           },
           onMountTimeout: () => {
             failToFallback("飞书文档加载超时，已切换为外链打开。");
@@ -297,7 +323,7 @@ export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
       <div className="feishu-doc-frame">
         <div className="feishu-doc-toolbar">
           <span>
-            {status === "loading" ? "正在加载飞书文档…" : "站内阅读飞书文档"}
+            {status === "loading" ? "正在加载飞书文档…" : "阅读飞书文档"}
           </span>
           <a href={src} target="_blank" rel="noopener noreferrer">
             在飞书中打开

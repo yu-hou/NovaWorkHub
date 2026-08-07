@@ -42,8 +42,9 @@ function normalizePageUrl(raw: string) {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error("页面地址必须是 http/https");
   }
-  // 飞书签名要求：去掉 # 与 ? 后的参数
-  return `${parsed.origin}${parsed.pathname}`;
+  // 飞书签名：保留 ?query，去掉 #hash（与 location.href.split('#')[0] 一致）
+  parsed.hash = "";
+  return parsed.toString();
 }
 
 function objTypeToPath(objType: string) {
