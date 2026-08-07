@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LEARNING_PLATFORM_HREF } from "@/lib/landing-content";
@@ -16,6 +16,8 @@ const NAV_LINKS = [
 
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuId = useId();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -36,12 +38,25 @@ export function LandingNav() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    document.body.classList.add("landing-menu-open");
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.classList.remove("landing-menu-open");
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
   return (
     <header
-      className={`landing-nav${scrolled ? " scrolled" : ""}`}
+      className={`landing-nav${scrolled ? " scrolled" : ""}${menuOpen ? " menu-open" : ""}`}
       id="landingNav"
       style={
-        scrolled
+        scrolled || menuOpen
           ? {
               WebkitBackdropFilter: "saturate(160%) blur(18px)",
               backdropFilter: "saturate(160%) blur(18px)",
@@ -50,7 +65,7 @@ export function LandingNav() {
       }
     >
       <div className="landing-nav-inner">
-        <Link className="landing-logo" href="/">
+        <Link className="landing-logo" href="/" onClick={() => setMenuOpen(false)}>
           <span className="brand-mark" aria-hidden="true">
             <img src="/images/nova/logo-mark.svg" alt="" />
           </span>
@@ -68,8 +83,43 @@ export function LandingNav() {
           <a className="button-link" href={LEARNING_PLATFORM_HREF}>
             进入学习平台
           </a>
+          <button
+            type="button"
+            className="landing-menu-toggle"
+            aria-expanded={menuOpen}
+            aria-controls={menuId}
+            aria-label={menuOpen ? "关闭菜单" : "打开菜单"}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
       </div>
+
+      {menuOpen ? (
+        <div className="landing-mobile-menu" id={menuId}>
+          <nav aria-label="官网移动导航">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <a
+            className="button-link landing-mobile-cta"
+            href={LEARNING_PLATFORM_HREF}
+            onClick={() => setMenuOpen(false)}
+          >
+            进入学习平台
+          </a>
+        </div>
+      ) : null}
     </header>
   );
 }

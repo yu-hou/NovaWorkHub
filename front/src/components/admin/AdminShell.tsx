@@ -76,8 +76,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <div className="admin-login-wrap">
           <div className="admin-login-panel">
             <div className="admin-login-brand">
-              <span className="brand-wordmark-text">Nova</span>
-              <p>管理后台</p>
+              <div>
+                <span className="brand-wordmark-text">Nova</span>
+                <p>管理后台</p>
+              </div>
+              <ThemeToggle className="sidebar-theme-toggle" />
             </div>
             <h1>管理员登录</h1>
             <p className="sub">

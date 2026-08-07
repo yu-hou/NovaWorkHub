@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useContentGate } from "@/components/auth/ContentGate";
@@ -34,6 +34,19 @@ export function ContentListView({
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState(content.defaultSort);
   const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    document.body.classList.add("mobile-list-filter-open", "mobile-sheet-open");
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFilterOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.classList.remove("mobile-list-filter-open", "mobile-sheet-open");
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [filterOpen]);
 
   const filtered = useMemo(() => {
     let list = content.cards.filter(
@@ -70,7 +83,10 @@ export function ContentListView({
 
   return (
     <section className="view" id={pageId}>
-      <div className="list-toolbar" data-list-controls={pageId}>
+      <div
+        className={`list-toolbar${filterOpen ? " mobile-filter-open" : ""}`}
+        data-list-controls={pageId}
+      >
         <div className="list-search">
           <input
             type="search"
@@ -79,12 +95,19 @@ export function ContentListView({
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <div
-          className={`list-tools${filterOpen ? " is-open" : ""}`}
-          tabIndex={-1}
-        >
+        <button
+          type="button"
+          className="mobile-list-filter-backdrop"
+          aria-label="关闭筛选"
+          tabIndex={filterOpen ? 0 : -1}
+          onClick={() => setFilterOpen(false)}
+        />
+        <div className="list-tools" tabIndex={-1}>
           <div className="mobile-list-filter-head">
             <strong>{filterLabel}</strong>
+            <button type="button" onClick={() => setFilterOpen(false)}>
+              完成
+            </button>
           </div>
           <div className="chip-strip" aria-label="分类">
             {categoryCounts.map((chip) => (
@@ -124,6 +147,7 @@ export function ContentListView({
         <button
           className="mobile-filter-trigger"
           type="button"
+          aria-expanded={filterOpen}
           onClick={() => setFilterOpen((v) => !v)}
         >
           <span>筛选</span>

@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function AccountSecurityPage() {
-  const { changePassword, isLoggedIn, loading, user } = useAuth();
+  const { changePassword, isLoggedIn, isAdmin, loading, logout, user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -94,6 +94,13 @@ export function AccountSecurityPage() {
               <span className="auth-kicker">{user?.email}</span>
               <h2>修改密码</h2>
               <p className="sub">输入当前密码，并设置一个新的登录密码。</p>
+              {isAdmin ? (
+                <div className="form-grid mt-12 account-security-admin-entry">
+                  <Link className="button-link" href="/admin">
+                    进入管理后台
+                  </Link>
+                </div>
+              ) : null}
               <form className="form-grid mt-12" onSubmit={onSubmit}>
                 <div>
                   <label htmlFor="securityCurrentPassword">当前密码</label>
@@ -140,6 +147,10 @@ export function AccountSecurityPage() {
               {error ? <p className="form-note account-security-error">{error}</p> : null}
               <p className="auth-switch-copy">
                 <Link href="/home">← 返回学习平台</Link>
+                {" · "}
+                <button type="button" className="auth-text-button" onClick={logout}>
+                  退出登录
+                </button>
               </p>
             </section>
           )}
