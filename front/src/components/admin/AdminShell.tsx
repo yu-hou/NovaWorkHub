@@ -50,9 +50,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const { user, isAdmin, loading, logout } = useAuth();
 
   useEffect(() => {
-    document.body.classList.add("home-app", "admin-app");
+    document.body.classList.add("home-app", "admin-app", "workbench-app");
     return () => {
-      document.body.classList.remove("home-app", "admin-app");
+      document.body.classList.remove("home-app", "admin-app", "workbench-app");
     };
   }, []);
 
@@ -93,7 +93,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <button type="button" onClick={logout}>
                   退出当前账号
                 </button>
-                <Link href="/home">返回学习平台</Link>
+                <Link href="/home">返回工作台</Link>
               </div>
             ) : (
               <LoginForm
@@ -104,7 +104,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               />
             )}
             <p className="sub admin-login-foot">
-              <Link href="/home">← 返回学习平台</Link>
+              <Link href="/home">← 返回工作台</Link>
             </p>
           </div>
         </div>

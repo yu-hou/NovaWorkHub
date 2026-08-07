@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useContentGate } from "@/components/auth/ContentGate";
+import { FeishuDocsViewer } from "@/components/home/FeishuDocsViewer";
 import { PlatformShell } from "@/components/home/PlatformShell";
 import { ApiError, apiFetch } from "@/lib/api";
 
@@ -23,50 +24,6 @@ type CourseDetail = {
   can_access: boolean;
 };
 
-function FeishuOpenCard({
-  url,
-  title,
-  autoOpened,
-}: {
-  url: string;
-  title: string;
-  autoOpened: boolean;
-}) {
-  return (
-    <div className="feishu-open-card">
-      <div className="feishu-open-card-body">
-        <h3>{autoOpened ? "已在新窗口打开飞书文档" : "在飞书中阅读本文"}</h3>
-        <p>
-          课程正文在飞书文档中。若新窗口被浏览器拦截，请点击下方按钮手动打开。
-        </p>
-        <p className="sub">
-          若打开后仍要扫码：请文档所有者把分享权限改为「获得链接的人可阅读」。
-        </p>
-        <div className="feishu-open-actions">
-          <a
-            className="feishu-open-primary"
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            打开飞书文档
-          </a>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => {
-              void navigator.clipboard?.writeText(url);
-            }}
-          >
-            复制链接
-          </button>
-        </div>
-        <p className="sub feishu-open-url">{title ? `${title} · ` : ""}{url}</p>
-      </div>
-    </div>
-  );
-}
-
 function CourseDetailInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -76,8 +33,6 @@ function CourseDetailInner() {
   const [error, setError] = useState("");
   const [errorKind, setErrorKind] = useState<"auth" | "member" | "other" | "">("");
   const [loading, setLoading] = useState(true);
-  const [autoOpened, setAutoOpened] = useState(false);
-  const openedForId = useRef<number | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -91,17 +46,11 @@ function CourseDetailInner() {
     setError("");
     setErrorKind("");
     setCourse(null);
-    setAutoOpened(false);
 
     void apiFetch<CourseDetail>(`/api/courses/${id}`)
       .then((data) => {
         if (cancelled) return;
         setCourse(data);
-        if (data.feishu_doc_url && openedForId.current !== data.id) {
-          openedForId.current = data.id;
-          const win = window.open(data.feishu_doc_url, "_blank", "noopener,noreferrer");
-          setAutoOpened(Boolean(win));
-        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -182,7 +131,7 @@ function CourseDetailInner() {
                 <button type="button" onClick={() => openMemberGate()}>
                   了解会员权益
                 </button>
-                <Link href="/#membership-benefits">前往官网会员区</Link>
+                <Link href="/home">返回工作台</Link>
               </>
             ) : null}
             <Link href="/learning">返回课程</Link>
@@ -193,10 +142,9 @@ function CourseDetailInner() {
       {course && !error ? (
         <div className="course-detail-body">
           {course.summary ? <p className="summary">{course.summary}</p> : null}
-          <FeishuOpenCard
-            url={course.feishu_doc_url}
+          <FeishuDocsViewer
+            src={course.feishu_doc_url}
             title={course.title}
-            autoOpened={autoOpened}
           />
         </div>
       ) : null}

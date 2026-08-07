@@ -18,9 +18,9 @@ export function AuthPage({ action }: AuthPageProps) {
   const isRegister = action === "register";
 
   useEffect(() => {
-    document.body.classList.add("home-app", "auth-app");
+    document.body.classList.add("home-app", "auth-app", "workbench-app");
     return () => {
-      document.body.classList.remove("home-app", "auth-app");
+      document.body.classList.remove("home-app", "auth-app", "workbench-app");
     };
   }, []);
 
@@ -38,26 +38,26 @@ export function AuthPage({ action }: AuthPageProps) {
     <main className="auth-page">
       <div className="bg-cosmos" aria-hidden="true" />
       <header className="auth-page-header">
-        <Link className="auth-brand" href="/home" aria-label="返回 Nova 首页">
+        <Link className="auth-brand" href="/home" aria-label="返回 Nova 工作台">
           <span className="brand-wordmark-text">Nova</span>
-          <small>点亮 AI 实战</small>
+          <small>工作台</small>
         </Link>
         <ThemeToggle />
       </header>
 
       <section className="auth-page-shell">
         <div className="auth-story-panel">
-          <span className="auth-kicker">NOVA ACADEMY</span>
-          <h1>{isRegister ? "创建你的学习账号" : "欢迎回到 Nova"}</h1>
+          <span className="auth-kicker">NOVA WORKBENCH</span>
+          <h1>{isRegister ? "创建工作台账号" : "欢迎回到工作台"}</h1>
           <p>
             {isRegister
-              ? "一个账号连接课程、学习路径与会员权益，从今天开始积累你的 AI 实战能力。"
-              : "继续你的课程与实战进度，把每一次学习变成真正可落地的成果。"}
+              ? "一个账号连接课程舱、路径轨与席位权益，从今天开始推进你的 AI 任务。"
+              : "继续课程与实战进度，把每一次打开都变成可落地的成果。"}
           </p>
-          <div className="auth-story-points" aria-label="平台特点">
-            <span>系统课程</span>
-            <span>实战案例</span>
-            <span>持续更新</span>
+          <div className="auth-story-points" aria-label="工作台特点">
+            <span>课程舱</span>
+            <span>案例库</span>
+            <span>席位权益</span>
           </div>
         </div>
 
@@ -71,7 +71,7 @@ export function AuthPage({ action }: AuthPageProps) {
               <p className="sub">{user?.email}</p>
               <div className="form-grid mt-12">
                 <Link className="button-link" href="/home">
-                  进入学习平台
+                  进入工作台
                 </Link>
               </div>
             </section>

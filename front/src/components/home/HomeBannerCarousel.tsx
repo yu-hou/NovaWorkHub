@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 import {
   BANNER_DURATION_MS,
+  DESK_MODULES,
   HOME_BANNERS,
-  HOME_SIDE_CARDS,
 } from "@/lib/home-content";
 
 export function HomeBannerCarousel() {
@@ -18,77 +18,54 @@ export function HomeBannerCarousel() {
     return () => window.clearInterval(timer);
   }, []);
 
+  const slide = HOME_BANNERS[index];
+
   return (
-    <div className="home-hero">
-      <div
-        className="home-carousel"
-        id="homeBannerCarousel"
-        aria-label="首页跑马灯"
-      >
-        <div className="home-banner-stage" id="homeBannerStage">
-          {HOME_BANNERS.map((slide, i) => (
-            <article
-              key={slide.title}
-              className={`home-banner-slide${i === index ? " active" : ""}`}
-              aria-hidden={i !== index}
-            >
-              <div className="home-banner-image">
-                <img src={slide.image} alt="" />
-              </div>
-              <div className="home-banner-copy">
-                <span className="eyebrow">Nova</span>
-                <h2>{slide.title}</h2>
-                <p>{slide.description}</p>
-                <a
-                  className="home-banner-link"
-                  href={slide.href}
-                  tabIndex={i === index ? 0 : -1}
-                >
-                  {slide.cta}
-                </a>
-              </div>
-            </article>
-          ))}
+    <div className="wb-desk-home">
+      <header className="wb-desk-welcome">
+        <div>
+          <p className="wb-desk-kicker">NOVA WORKBENCH</p>
+          <h1>工作台</h1>
+          <p className="wb-desk-lead">
+            今天的任务从这里开始。课程、路径与案例都在侧栏，推荐课在下方。
+          </p>
         </div>
         <div
-          className="home-banner-rail"
-          id="homeBannerRail"
+          className="wb-desk-spotlight"
           style={{ ["--home-banner-duration" as string]: `${BANNER_DURATION_MS}ms` }}
         >
-          {HOME_BANNERS.map((slide, i) => {
-            let state = "";
-            if (i < index) state = "complete";
-            if (i === index) state = "active";
-            return (
-              <span
-                key={slide.title}
-                className={`home-banner-progress ${state}`.trim()}
-                aria-hidden="true"
-              >
-                <span />
-              </span>
-            );
-          })}
+          <div className="wb-desk-spotlight-media" aria-hidden="true">
+            <img src={slide.image} alt="" />
+          </div>
+          <div className="wb-desk-spotlight-copy">
+            <h2>{slide.title}</h2>
+            <p>{slide.description}</p>
+            <a href={slide.href}>{slide.cta}</a>
+          </div>
+          <div className="wb-desk-spotlight-rail" aria-hidden="true">
+            {HOME_BANNERS.map((item, i) => {
+              let state = "";
+              if (i < index) state = "complete";
+              if (i === index) state = "active";
+              return (
+                <span key={item.title} className={`wb-desk-progress ${state}`.trim()}>
+                  <span />
+                </span>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div className="home-side-cards" id="homeSideCards" aria-label="首页右侧展示区">
-        {HOME_SIDE_CARDS.map((card) => (
-          <a
-            key={card.title}
-            className="home-side-card has-image"
-            href={card.href}
-            style={{
-              ["--home-side-card-bg" as string]: `url('${card.image}')`,
-            }}
-          >
-            <div className="home-side-card-copy">
-              <strong>{card.title}</strong>
-              <p>{card.subtitle}</p>
-            </div>
+      <nav className="wb-desk-modules" aria-label="工作台模块">
+        {DESK_MODULES.map((mod) => (
+          <a className="wb-desk-module" href={mod.href} key={mod.code}>
+            <span>{mod.code}</span>
+            <strong>{mod.title}</strong>
+            <small>{mod.subtitle}</small>
           </a>
         ))}
-      </div>
+      </nav>
     </div>
   );
 }

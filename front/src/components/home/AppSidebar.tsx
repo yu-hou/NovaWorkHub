@@ -9,6 +9,45 @@ import { NAV_ICON_MAP } from "@/components/home/home-icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SIDE_NAV } from "@/lib/home-content";
 
+function GuestSeatArt() {
+  return (
+    <svg
+      className="wb-seat-art"
+      viewBox="0 0 72 72"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect width="72" height="72" rx="16" fill="currentColor" className="wb-seat-art-bg" />
+      <rect x="14" y="18" width="44" height="36" rx="8" fill="none" stroke="currentColor" strokeWidth="2" className="wb-seat-art-frame" />
+      <circle cx="36" cy="32" r="7" fill="none" stroke="currentColor" strokeWidth="2" className="wb-seat-art-frame" />
+      <path
+        d="M22 48c2.8-6 8-9 14-9s11.2 3 14 9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        className="wb-seat-art-frame"
+      />
+      <circle cx="54" cy="22" r="8" className="wb-seat-art-badge" />
+      <path
+        d="M54 18.5v7M50.5 22h7"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        className="wb-seat-art-plus"
+      />
+    </svg>
+  );
+}
+
+function UserSeatArt({ initial }: { initial: string }) {
+  return (
+    <span className="wb-seat-user-art" aria-hidden="true">
+      <span className="wb-seat-user-initial">{initial}</span>
+    </span>
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, isLoggedIn, isAdmin, isMember, logout } = useAuth();
@@ -26,6 +65,8 @@ export function AppSidebar() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [accountOpen]);
 
+  const displayInitial = (user?.display_name || user?.email || "用").slice(0, 1);
+
   return (
     <>
       <aside className="sidebar">
@@ -39,7 +80,7 @@ export function AppSidebar() {
             <span className="sidebar-brand-title">
               <span className="brand-wordmark-text">Nova</span>
             </span>
-            <p>点亮 AI 实战</p>
+            <p>工作台</p>
           </Link>
           <ThemeToggle className="sidebar-theme-toggle" />
         </div>
@@ -47,29 +88,9 @@ export function AppSidebar() {
         <nav className="side-nav" aria-label="主导航">
           {SIDE_NAV.map((item) => {
             const Icon = NAV_ICON_MAP[item.icon];
-            if ("action" in item && item.action) {
-              return (
-                <button
-                  key={item.label}
-                  className="nav-item nav-action-item"
-                  id="contributionEntryBtn"
-                  type="button"
-                  onClick={() => {
-                    setAccountOpen(false);
-                    window.alert("暂未开放，敬请期待。");
-                  }}
-                >
-                  <span className="nav-icon">
-                    <Icon />
-                  </span>
-                  {item.label}
-                </button>
-              );
-            }
-            const match = "match" in item ? item.match : item.href;
             const isActive =
-              pathname === match ||
-              (match !== "/home" && pathname.startsWith(`${match}/`));
+              pathname === item.match ||
+              (item.match !== "/home" && pathname.startsWith(`${item.match}/`));
             return (
               <a
                 key={item.label}
@@ -84,56 +105,37 @@ export function AppSidebar() {
               </a>
             );
           })}
-          {isAdmin ? (
-            <Link
-              className={`nav-item${pathname.startsWith("/admin") ? " active" : ""}`}
-              href="/admin"
-            >
-              <span className="nav-icon">
-                <NAV_ICON_MAP.about />
-              </span>
-              管理后台
-            </Link>
-          ) : null}
         </nav>
 
-        <div className="sidebar-footer">
-          <div className="account-menu" id="accountMenu" ref={rootRef}>
-            {isLoggedIn ? (
+        <div className="sidebar-footer wb-seat-dock" ref={rootRef}>
+          {isLoggedIn ? (
+            <div className="wb-seat-card is-user" id="accountMenu">
               <button
-                className="account-trigger"
+                className="wb-seat-profile"
                 type="button"
                 aria-expanded={accountOpen}
                 aria-controls="accountMenuPanel"
                 onClick={() => setAccountOpen((v) => !v)}
               >
-                <span className="avatar">
-                  {(user?.display_name || user?.email || "用").slice(0, 1)}
-                </span>
-                <span className="account-trigger-text">
+                <UserSeatArt initial={displayInitial} />
+                <span className="wb-seat-copy">
                   <strong>{user?.display_name || user?.email}</strong>
-                  <small>{isMember ? "会员已开通" : "普通用户"}</small>
+                  <small>{isMember ? "会员席位已开通" : "普通席位"}</small>
+                </span>
+                <span className={`wb-seat-chevron${accountOpen ? " is-open" : ""}`} aria-hidden="true">
+                  <svg viewBox="0 0 16 16">
+                    <path d="M4 6.5 8 10.5 12 6.5" />
+                  </svg>
                 </span>
               </button>
-            ) : (
-              <Link className="account-trigger" href="/login">
-                <span className="avatar">登</span>
-                <span className="account-trigger-text">
-                  <strong>登录 / 注册</strong>
-                  <small>进入账号页面</small>
-                </span>
-              </Link>
-            )}
-            {isLoggedIn ? (
+
               <div
-                className={`account-popover${accountOpen ? "" : " hidden"}`}
+                className={`account-popover wb-seat-popover${accountOpen ? "" : " hidden"}`}
                 id="accountMenuPanel"
               >
                 <section className="account-menu-card" id="loginCard">
                   <div className="account-menu-profile">
-                    <span className="avatar account-menu-avatar">
-                      {(user?.display_name || user?.email || "用").slice(0, 1)}
-                    </span>
+                    <UserSeatArt initial={displayInitial} />
                     <div>
                       <strong>{user?.display_name || "Nova 用户"}</strong>
                       <p>{user?.email}</p>
@@ -226,8 +228,26 @@ export function AppSidebar() {
                   </div>
                 </section>
               </div>
-            ) : null}
-          </div>
+            </div>
+          ) : (
+            <div className="wb-seat-card is-guest">
+              <div className="wb-seat-visual">
+                <GuestSeatArt />
+              </div>
+              <div className="wb-seat-copy">
+                <strong>进入工作台席位</strong>
+                <small>登录后同步课程进度与权限</small>
+              </div>
+              <div className="wb-seat-actions">
+                <Link className="wb-seat-btn primary" href="/login">
+                  登录
+                </Link>
+                <Link className="wb-seat-btn ghost" href="/register">
+                  注册
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </>

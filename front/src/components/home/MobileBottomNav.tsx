@@ -8,30 +8,17 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import {
   NAV_ICON_MAP,
   NavCourseIcon,
-  NavGiftIcon,
   NavHomeIcon,
   NavMoreIcon,
-  NavPathIcon,
 } from "@/components/home/home-icons";
-import { SIDE_NAV } from "@/lib/home-content";
 
 const BASE_ITEMS = [
-  { href: "/home", label: "首页", match: "/home", Icon: NavHomeIcon },
-  {
-    href: "/learning-paths",
-    label: "路线",
-    match: "/learning-paths",
-    Icon: NavPathIcon,
-  },
+  { href: "/home", label: "工作台", match: "/home", Icon: NavHomeIcon },
   { href: "/learning", label: "课程", match: "/learning", Icon: NavCourseIcon },
-  { href: "/benefits", label: "福利", match: "/benefits", Icon: NavGiftIcon },
 ] as const;
 
-const MORE_NAV = SIDE_NAV.filter(
-  (item) =>
-    !("action" in item && item.action) &&
-    !BASE_ITEMS.some((base) => base.href === item.href),
-);
+const MORE_NAV: { label: string; href: string; icon: keyof typeof NAV_ICON_MAP; match: string }[] =
+  [];
 
 function AdminNavIcon() {
   return (
@@ -206,9 +193,8 @@ export function MobileBottomNav() {
             <div className="mobile-more-grid">
               {MORE_NAV.map((item) => {
                 const Icon = NAV_ICON_MAP[item.icon];
-                const match = "match" in item ? item.match : item.href;
                 const active =
-                  pathname === match || pathname.startsWith(`${match}/`);
+                  pathname === item.match || pathname.startsWith(`${item.match}/`);
                 return (
                   <a
                     key={item.label}

@@ -60,12 +60,19 @@ export default function LearningPage() {
       ) : null}
       {loading || authLoading ? <p className="empty-state">课程加载中…</p> : null}
       {!loading && !authLoading && content ? (
-        <ContentListView
-          pageId="pageLearning"
-          content={content}
-          variant="course"
-          filterLabel="筛选课程"
-        />
+        <>
+          <header className="wb-page-head">
+            <p className="wb-desk-kicker">COURSE BAY</p>
+            <h1>课程舱</h1>
+            <p>搜索、筛选后打开课程。会员舱位需登录并开通席位。</p>
+          </header>
+          <ContentListView
+            pageId="pageLearning"
+            content={content}
+            variant="course"
+            filterLabel="筛选课程"
+          />
+        </>
       ) : null}
     </PlatformShell>
   );

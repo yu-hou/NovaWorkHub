@@ -76,7 +76,7 @@ function MemberGateModal({
             该课程为会员专享。请前往官网会员区联系管理员开通，或请管理员在后台将你标记为会员。
           </p>
           <div className="form-grid mt-12">
-            <Link href="/#membership-benefits">查看会员权益</Link>
+            <Link href="/home">进入工作台开通席位</Link>
             <button type="button" onClick={onClose}>
               我知道了
             </button>

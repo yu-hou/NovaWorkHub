@@ -217,7 +217,7 @@ export function AdminCoursesPage() {
           <div>
             <h1>课程管理</h1>
             <p className="sub">
-              绑定飞书文档分享链接即可。学员打开课程后会在新窗口跳转飞书阅读，本站不嵌入、不同步正文。
+              绑定飞书文档分享链接。学员在站内通过飞书云文档组件阅读；嵌入失败时回退为打开外链。请把开放平台应用加为文档协作者（只读），并将分享设为「获得链接的人可阅读」。
             </p>
           </div>
           <button type="button" className="admin-ghost-btn" onClick={() => void load()}>
@@ -324,7 +324,7 @@ export function AdminCoursesPage() {
                 required
               />
               <p className="sub">
-                权限请设为「获得链接的人可阅读」，避免学员打开时出现飞书登录二维码。
+                权限请设为「获得链接的人可阅读」，并把飞书开放平台应用加为该文档协作者（只读），否则站内嵌入会失败并回退外链。
               </p>
             </div>
 

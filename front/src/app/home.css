@@ -9469,6 +9469,12 @@ html.dark .theme-toggle-sun { display: inline-flex; }
   background: #fff;
 }
 
+.feishu-content .feishu-doc-mount {
+  width: 100%;
+  min-height: 72vh;
+  background: var(--panel);
+}
+
 .feishu-content .feishu-synced-content {
   padding: 20px 22px;
   line-height: 1.75;

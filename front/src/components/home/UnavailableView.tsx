@@ -8,10 +8,10 @@ export function UnavailableView({ title = "暂未开放" }: { title?: string }) 
       <section className="view">
         <div className="login-card" style={{ maxWidth: 520, margin: "48px auto" }}>
           <h2>{title}</h2>
-          <p className="sub">该模块暂未开放，敬请期待。当前可浏览首页与课程内容。</p>
+          <p className="sub">该舱位暂未开放。可先回到工作台或进入课程舱。</p>
           <div className="form-grid mt-12">
-            <a href="/home">返回首页</a>
-            <a href="/learning">去看课程</a>
+            <a href="/home">返回工作台</a>
+            <a href="/learning">打开课程舱</a>
           </div>
         </div>
       </section>

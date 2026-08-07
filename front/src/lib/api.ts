@@ -200,6 +200,10 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     return invoke<T>("course-access", { course_id: Number(courseDetail[1]) });
   }
 
+  if (path === "/api/feishu/doc-signature" && method === "POST") {
+    return invoke<T>("feishu-doc-signature", body as Record<string, unknown>);
+  }
+
   if (path === "/api/admin/users" && method === "GET") {
     const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     if (error) fail(error, "用户列表加载失败");

@@ -12,18 +12,18 @@ type PlatformShellProps = {
 
 export function PlatformShell({ children }: PlatformShellProps) {
   useEffect(() => {
-    document.body.classList.add("home-app");
+    document.body.classList.add("home-app", "workbench-app");
     return () => {
-      document.body.classList.remove("home-app");
+      document.body.classList.remove("home-app", "workbench-app");
     };
   }, []);
 
   return (
     <ContentGateProvider>
-      <div className="bg-cosmos" aria-hidden="true" />
-      <div className="app-shell">
+      <div className="bg-cosmos wb-app-atmosphere" aria-hidden="true" />
+      <div className="app-shell wb-app-shell">
         <AppSidebar />
-        <main className="main-panel">{children}</main>
+        <main className="main-panel wb-main-panel">{children}</main>
         <MobileBottomNav />
       </div>
     </ContentGateProvider>

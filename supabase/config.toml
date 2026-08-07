@@ -430,3 +430,9 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/course-access/deno.json"
 entrypoint = "./functions/course-access/index.ts"
+
+[functions.feishu-doc-signature]
+enabled = true
+verify_jwt = true
+import_map = "./functions/feishu-doc-signature/deno.json"
+entrypoint = "./functions/feishu-doc-signature/index.ts"

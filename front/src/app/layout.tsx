@@ -4,12 +4,10 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
-import "./landing.css";
 
 export const metadata: Metadata = {
-  title: "Nova｜AI Agent 实战学习社群",
-  description:
-    "跨过 AI 学习门槛，用 Agent 真正做出结果。系统课程、案例拆解、直播共学、实战项目与会员资源。",
+  title: "Nova 工作台",
+  description: "Nova 工作台：把 AI 学习收成可开工的桌面。进入工作台，做出结果。",
   icons: {
     icon: "/seo/favicon.ico",
   },
@@ -29,6 +27,16 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full">

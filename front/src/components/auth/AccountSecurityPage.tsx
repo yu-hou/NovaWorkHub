@@ -16,9 +16,9 @@ export function AccountSecurityPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    document.body.classList.add("home-app", "auth-app");
+    document.body.classList.add("home-app", "auth-app", "workbench-app");
     return () => {
-      document.body.classList.remove("home-app", "auth-app");
+      document.body.classList.remove("home-app", "auth-app", "workbench-app");
     };
   }, []);
 
@@ -146,7 +146,7 @@ export function AccountSecurityPage() {
               {message ? <p className="form-note account-security-success">{message}</p> : null}
               {error ? <p className="form-note account-security-error">{error}</p> : null}
               <p className="auth-switch-copy">
-                <Link href="/home">← 返回学习平台</Link>
+                <Link href="/home">← 返回工作台</Link>
                 {" · "}
                 <button type="button" className="auth-text-button" onClick={logout}>
                   退出登录

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 
 import "../home.css";
+import "../workbench.css";
 
 export const metadata: Metadata = {
-  title: "Nova 学习平台",
+  title: "Nova 工作台",
   description:
-    "Nova 社群成员学习平台，集中访问 AI 课程、实战案例、共学活动和会员福利。",
+    "Nova 工作台：课程舱、路径轨、案例库、活动台与权益仓，集中推进 AI 实战学习。",
 };
 
 export default function PlatformLayout({

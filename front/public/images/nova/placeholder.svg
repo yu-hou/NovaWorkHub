@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
-  <rect width="640" height="360" fill="#e6f7f5"/>
-  <rect x="24" y="24" width="592" height="312" rx="16" stroke="#99d9d2" stroke-width="2" fill="#f5fbfa"/>
-  <circle cx="320" cy="150" r="36" fill="#0d9488" opacity="0.25"/>
-  <path d="M320 118l6.4 19.8h20.8l-16.8 12.2 6.4 19.8L320 157.6l-16.8 12.2 6.4-19.8-16.8-12.2h20.8L320 118z" fill="#0f766e"/>
-  <text x="320" y="230" text-anchor="middle" font-family="Sora, system-ui, sans-serif" font-size="18" font-weight="600" fill="#0f3d3e">Nova</text>
-  <text x="320" y="256" text-anchor="middle" font-family="Sora, system-ui, sans-serif" font-size="13" fill="#5f6b7a">Image placeholder</text>
-</svg>
