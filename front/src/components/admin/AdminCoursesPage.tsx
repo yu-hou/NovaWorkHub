@@ -217,7 +217,7 @@ export function AdminCoursesPage() {
           <div>
             <h1>课程管理</h1>
             <p className="sub">
-              绑定飞书文档分享链接。学员在站内通过飞书云文档组件阅读；嵌入失败时回退为打开外链。请把开放平台应用加为文档协作者（只读），并将分享设为「获得链接的人可阅读」。
+              绑定飞书文档或知识库链接。站内会优先嵌入；wiki 会自动解析为云文档。请开通 wiki:wiki:readonly（若用知识库），并把应用加为协作者。
             </p>
           </div>
           <button type="button" className="admin-ghost-btn" onClick={() => void load()}>

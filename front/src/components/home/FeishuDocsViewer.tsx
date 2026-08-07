@@ -16,6 +16,7 @@ type FeishuSignature = {
   url: string;
   jsApiList: string[];
   locale: string;
+  embed_src?: string | null;
 };
 
 type DocComponentInstance = {
@@ -186,10 +187,19 @@ export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
           "/api/feishu/doc-signature",
           {
             method: "POST",
-            body: { page_url: signaturePageUrl() },
+            body: {
+              page_url: signaturePageUrl(),
+              doc_url: src,
+            },
           },
         );
         if (cancelled) return;
+
+        const embedSrc = (auth.embed_src || src).trim();
+        if (!embedSrc) {
+          failToFallback("未能解析可嵌入的飞书文档地址。");
+          return;
+        }
 
         const DocSdk = await loadFeishuSdk();
         if (cancelled) return;
@@ -208,7 +218,7 @@ export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
         mountNode.innerHTML = "";
 
         const instance = new DocSdk({
-          src,
+          src: embedSrc,
           mount: mountNode,
           theme: theme === "dark" ? "dark" : "light",
           size: {

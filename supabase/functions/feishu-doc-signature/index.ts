@@ -46,6 +46,25 @@ function normalizePageUrl(raw: string) {
   return `${parsed.origin}${parsed.pathname}`;
 }
 
+function objTypeToPath(objType: string) {
+  switch (objType) {
+    case "doc":
+      return "docs";
+    case "docx":
+      return "docx";
+    case "sheet":
+      return "sheets";
+    case "bitable":
+      return "base";
+    case "mindnote":
+      return "mindnotes";
+    case "slides":
+      return "slides";
+    default:
+      return null;
+  }
+}
+
 async function getAppAccessToken(appId: string, appSecret: string) {
   const now = Date.now();
   if (tokenCache && tokenCache.expireAt > now + 60_000) {
@@ -106,6 +125,62 @@ async function getJsapiTicket(appAccessToken: string) {
   return ticketCache.ticket;
 }
 
+/** 将 wiki 链接解析为云文档组件可打开的 docx/docs 等地址 */
+async function resolveEmbedSrc(docUrl: string, appAccessToken: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(docUrl);
+  } catch {
+    throw new Error("飞书文档链接无效");
+  }
+
+  const wikiMatch = parsed.pathname.match(/\/wiki\/([^/?#]+)/);
+  if (!wikiMatch) {
+    // 已是 docx/docs/sheets 等，直接去掉查询参数后返回
+    return `${parsed.origin}${parsed.pathname}`;
+  }
+
+  const wikiToken = wikiMatch[1];
+  const res = await fetch(
+    `https://open.feishu.cn/open-apis/wiki/v2/spaces/get_node?token=${encodeURIComponent(wikiToken)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${appAccessToken}`,
+      },
+    },
+  );
+  const payload = (await res.json()) as {
+    code?: number;
+    msg?: string;
+    data?: {
+      node?: {
+        obj_type?: string;
+        obj_token?: string;
+        title?: string;
+      };
+    };
+  };
+
+  if (payload.code === 99991672) {
+    throw new Error(
+      "应用缺少 wiki 权限。请在开放平台为应用开通 wiki:wiki:readonly 或 wiki:node:read，并发布生效后重试",
+    );
+  }
+  if (!res.ok || payload.code !== 0 || !payload.data?.node?.obj_token) {
+    throw new Error(payload.msg || "无法解析知识库节点，请确认应用已是该页面协作者");
+  }
+
+  const { obj_type: objType, obj_token: objToken } = payload.data.node;
+  const path = objType ? objTypeToPath(objType) : null;
+  if (!path || !objToken) {
+    throw new Error(
+      `该知识库节点类型暂不支持站内嵌入（${objType ?? "unknown"}），请改用云文档 docx 链接或外链打开`,
+    );
+  }
+
+  return `${parsed.origin}/${path}/${objToken}`;
+}
+
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
     if (!ctx.userClaims?.id) {
@@ -121,7 +196,10 @@ export default {
       );
     }
 
-    const body = (await req.json().catch(() => ({}))) as { page_url?: string };
+    const body = (await req.json().catch(() => ({}))) as {
+      page_url?: string;
+      doc_url?: string;
+    };
     if (!body.page_url?.trim()) {
       return jsonError("缺少 page_url", 400);
     }
@@ -138,6 +216,12 @@ export default {
 
     try {
       const appAccessToken = await getAppAccessToken(appId, appSecret);
+
+      let embedSrc: string | null = null;
+      if (body.doc_url?.trim()) {
+        embedSrc = await resolveEmbedSrc(body.doc_url.trim(), appAccessToken);
+      }
+
       const ticket = await getJsapiTicket(appAccessToken);
       const nonceStr = randomNonce(16);
       const timestamp = Date.now();
@@ -153,6 +237,7 @@ export default {
         url: pageUrl,
         jsApiList: ["DocsComponent"],
         locale: "zh-CN",
+        embed_src: embedSrc,
       });
     } catch (error) {
       return jsonError(
