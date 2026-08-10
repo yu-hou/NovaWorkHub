@@ -5,9 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useContentGate } from "@/components/auth/ContentGate";
 import { FeishuDocsViewer } from "@/components/home/FeishuDocsViewer";
-import { PlatformShell } from "@/components/home/PlatformShell";
 import { ApiError, apiFetch } from "@/lib/api";
 
 type CourseDetail = {
@@ -24,20 +22,43 @@ type CourseDetail = {
   can_access: boolean;
 };
 
+type ErrorKind = "auth" | "member" | "other" | "";
+
+function CourseReaderStatus({ children }: { children: React.ReactNode }) {
+  return (
+    <main className="course-reader-shell">
+      <section className="course-reader-status">{children}</section>
+    </main>
+  );
+}
+
 function CourseDetailInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoggedIn, isMember, loading: authLoading } = useAuth();
-  const { openLogin, openMemberGate } = useContentGate();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [error, setError] = useState("");
-  const [errorKind, setErrorKind] = useState<"auth" | "member" | "other" | "">("");
+  const [errorKind, setErrorKind] = useState<ErrorKind>("");
   const [loading, setLoading] = useState(true);
+  const courseId = searchParams.get("id");
+  const validCourseId = courseId && /^\d+$/.test(courseId) ? courseId : null;
+
+  useEffect(() => {
+    document.body.classList.add("course-reader-app");
+    return () => document.body.classList.remove("course-reader-app");
+  }, []);
+
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = course?.title ? `${course.title}｜Nova` : "课程阅读｜Nova";
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [course?.title]);
 
   useEffect(() => {
     if (authLoading) return;
-    const id = searchParams.get("id");
-    if (!id) return;
+    if (!validCourseId) return;
 
     let cancelled = false;
     // Loading state intentionally resets when the requested course or entitlement changes.
@@ -47,10 +68,9 @@ function CourseDetailInner() {
     setErrorKind("");
     setCourse(null);
 
-    void apiFetch<CourseDetail>(`/api/courses/${id}`)
+    void apiFetch<CourseDetail>(`/api/courses/${validCourseId}`)
       .then((data) => {
-        if (cancelled) return;
-        setCourse(data);
+        if (!cancelled) setCourse(data);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -85,79 +105,80 @@ function CourseDetailInner() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, authLoading, isLoggedIn, isMember]);
+  }, [validCourseId, authLoading, isLoggedIn, isMember]);
+
+  if (!validCourseId && !authLoading) {
+    return (
+      <CourseReaderStatus>
+        <p className="course-reader-eyebrow">NOVA 课程舱</p>
+        <h1>课程地址无效</h1>
+        <p>请返回课程舱重新选择课程。</p>
+        <div className="course-reader-actions">
+          <Link href="/learning/">返回课程舱</Link>
+        </div>
+      </CourseReaderStatus>
+    );
+  }
+
+  if (loading || authLoading) {
+    return (
+      <CourseReaderStatus>
+        <span className="course-reader-spinner" aria-hidden="true" />
+        <p>正在打开课程文档…</p>
+      </CourseReaderStatus>
+    );
+  }
+
+  if (error || !course) {
+    const nextUrl = validCourseId
+      ? `/learning/course/?id=${encodeURIComponent(validCourseId)}`
+      : "/learning/";
+    return (
+      <CourseReaderStatus>
+        <p className="course-reader-eyebrow">NOVA 课程舱</p>
+        <h1>无法打开课程</h1>
+        <p>{error || "课程不存在或暂不可用。"}</p>
+        <div className="course-reader-actions">
+          {errorKind === "auth" ? (
+            <button
+              type="button"
+              onClick={() =>
+                router.push(`/login?next=${encodeURIComponent(nextUrl)}`)
+              }
+            >
+              登录本站账号
+            </button>
+          ) : null}
+          {errorKind === "member" ? <Link href="/home/">了解会员权益</Link> : null}
+          <Link href="/learning/">返回课程舱</Link>
+        </div>
+      </CourseReaderStatus>
+    );
+  }
 
   return (
-    <section className="view course-detail-view">
-      <div className="section-title">
-        <div>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => router.push("/learning")}
-          >
-            ← 返回课程列表
-          </button>
-          <h2 style={{ marginTop: 12 }}>{course?.title || "课程详情"}</h2>
-          {course ? (
-            <p className="sub">
-              <span className={`category-badge ${course.category_class}`}>
-                {course.category}
-              </span>
-              {course.is_member_only ? " · 会员专享" : " · 公开课程"}
-              {" · 飞书文档"}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      {loading ? <p className="empty-state">加载中…</p> : null}
-
-      {error ? (
-        <div className="login-card" style={{ maxWidth: 560 }}>
-          <h2>无法打开课程</h2>
-          <p className="sub">{error}</p>
-          <div className="form-grid mt-12">
-            {errorKind === "auth" ? (
-              <button
-                type="button"
-                onClick={() => openLogin("登录后查看课程详情")}
-              >
-                登录本站账号
-              </button>
-            ) : null}
-            {errorKind === "member" ? (
-              <>
-                <button type="button" onClick={() => openMemberGate()}>
-                  了解会员权益
-                </button>
-                <Link href="/home">返回工作台</Link>
-              </>
-            ) : null}
-            <Link href="/learning">返回课程</Link>
-          </div>
-        </div>
-      ) : null}
-
-      {course && !error ? (
-        <div className="course-detail-body">
-          {course.summary ? <p className="summary">{course.summary}</p> : null}
-          <FeishuDocsViewer
-            src={course.feishu_doc_url}
-            title={course.title}
-          />
-        </div>
-      ) : null}
-    </section>
+    <main className="course-reader-shell" aria-label={course.title}>
+      <FeishuDocsViewer
+        courseId={course.id}
+        src={course.feishu_doc_url}
+        title={course.title}
+        fullScreen
+      />
+    </main>
   );
 }
 
 export default function CourseDetailPage() {
   return (
-    <PlatformShell>
-      <Suspense fallback={<p className="empty-state">课程加载中…</p>}>
-        <CourseDetailInner />
-      </Suspense>
-    </PlatformShell>
+    <Suspense
+      fallback={
+        <CourseReaderStatus>
+          <span className="course-reader-spinner" aria-hidden="true" />
+          <p>正在打开课程文档…</p>
+        </CourseReaderStatus>
+      }
+    >
+      <CourseDetailInner />
+    </Suspense>
   );
 }

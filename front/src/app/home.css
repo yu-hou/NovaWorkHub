@@ -9486,6 +9486,173 @@ html.dark .theme-toggle-sun { display: inline-flex; }
   margin: 0.8em 0 0.4em;
 }
 
+body.course-reader-app {
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.course-reader-shell {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--panel);
+}
+
+.course-reader-status {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text);
+}
+
+.course-reader-status h1,
+.course-reader-status p {
+  margin: 0;
+}
+
+.course-reader-status h1 {
+  font-size: clamp(24px, 4vw, 34px);
+  letter-spacing: -0.025em;
+}
+
+.course-reader-status > p:not(.course-reader-eyebrow) {
+  max-width: 560px;
+  color: var(--muted);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.course-reader-eyebrow {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.course-reader-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.course-reader-actions a,
+.course-reader-actions button {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.course-reader-actions a:hover,
+.course-reader-actions button:hover {
+  border-color: var(--line-strong);
+  background: var(--panel-soft);
+}
+
+.course-reader-actions a:focus-visible,
+.course-reader-actions button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.course-reader-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--purple-deep, var(--accent));
+  border-radius: 50%;
+  animation: course-reader-spin 0.75s linear infinite;
+}
+
+@keyframes course-reader-spin {
+  to { transform: rotate(360deg); }
+}
+
+.feishu-content.feishu-content-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  border: 0;
+  border-radius: 0;
+  background: var(--panel);
+}
+
+.feishu-content-fullscreen .feishu-doc-frame {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  grid-template-rows: 1fr;
+}
+
+.feishu-content-fullscreen .feishu-doc-mount {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.course-reader-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.feishu-open-card.feishu-open-card-fullscreen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+}
+
+.feishu-open-card-fullscreen .feishu-open-card-body {
+  width: min(100%, 680px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-reader-spinner {
+    animation: none;
+  }
+}
+
 .admin-root {
   min-height: 100vh;
   position: relative;

@@ -50,21 +50,27 @@ declare global {
 }
 
 type FeishuDocsViewerProps = {
+  courseId: number;
   src: string;
   title: string;
+  fullScreen?: boolean;
 };
 
 function FeishuFallbackCard({
   url,
   title,
   reason,
+  fullScreen = false,
 }: {
   url: string;
   title: string;
   reason?: string;
+  fullScreen?: boolean;
 }) {
   return (
-    <div className="feishu-open-card">
+    <div
+      className={`feishu-open-card${fullScreen ? " feishu-open-card-fullscreen" : ""}`}
+    >
       <div className="feishu-open-card-body">
         <h3>在飞书中阅读本文</h3>
         <p>
@@ -166,7 +172,12 @@ function formatAuthError(error: unknown) {
   return "飞书文档鉴权失败";
 }
 
-export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
+export function FeishuDocsViewer({
+  courseId,
+  src,
+  title,
+  fullScreen = false,
+}: FeishuDocsViewerProps) {
   const { theme } = useTheme();
   const mountRef = useRef<HTMLDivElement>(null);
   const componentRef = useRef<DocComponentInstance | null>(null);
@@ -207,7 +218,7 @@ export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
             method: "POST",
             body: {
               page_url: signaturePageUrl(),
-              doc_url: src,
+              course_id: courseId,
             },
           },
         );
@@ -241,7 +252,7 @@ export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
           theme: theme === "dark" ? "dark" : "light",
           size: {
             width: "100%",
-            height: "72vh",
+            height: fullScreen ? "100dvh" : "72vh",
           },
           auth: {
             appId: auth.appId,
@@ -310,26 +321,41 @@ export function FeishuDocsViewer({ src, title }: FeishuDocsViewerProps) {
       }
       componentRef.current = null;
     };
-  }, [src, theme]);
+  }, [courseId, fullScreen, src, theme]);
 
   if (status === "fallback") {
     return (
-      <FeishuFallbackCard url={src} title={title} reason={fallbackReason} />
+      <FeishuFallbackCard
+        url={src}
+        title={title}
+        reason={fallbackReason}
+        fullScreen={fullScreen}
+      />
     );
   }
 
   return (
-    <div className="feishu-content">
+    <div
+      className={`feishu-content${fullScreen ? " feishu-content-fullscreen" : ""}`}
+    >
       <div className="feishu-doc-frame">
-        <div className="feishu-doc-toolbar">
-          <span>
-            {status === "loading" ? "正在加载飞书文档…" : "阅读飞书文档"}
-          </span>
-          <a href={src} target="_blank" rel="noopener noreferrer">
-            在飞书中打开
-          </a>
-        </div>
+        {!fullScreen ? (
+          <div className="feishu-doc-toolbar">
+            <span>
+              {status === "loading" ? "正在加载飞书文档…" : "阅读飞书文档"}
+            </span>
+            <a href={src} target="_blank" rel="noopener noreferrer">
+              在飞书中打开
+            </a>
+          </div>
+        ) : null}
         <div ref={mountRef} className="feishu-doc-mount" />
+        {fullScreen && status === "loading" ? (
+          <div className="course-reader-loading" role="status">
+            <span className="course-reader-spinner" aria-hidden="true" />
+            <span>正在加载飞书文档…</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );

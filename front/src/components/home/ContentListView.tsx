@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -185,7 +184,6 @@ function ContentCardItem({
   card: PlatformCard;
   variant: "course" | "content";
 }) {
-  const router = useRouter();
   const { isLoggedIn, isMember } = useAuth();
   const { openLogin, openMemberGate } = useContentGate();
 
@@ -205,9 +203,10 @@ function ContentCardItem({
       return;
     }
 
-    const href = card.href || (card.id ? `/learning/course?id=${card.id}` : null);
+    const href =
+      card.href || (card.id ? `/learning/course/?id=${card.id}` : null);
     if (href) {
-      router.push(href);
+      window.open(href, "_blank", "noopener,noreferrer");
       return;
     }
     window.alert("课程详情暂不可用。");

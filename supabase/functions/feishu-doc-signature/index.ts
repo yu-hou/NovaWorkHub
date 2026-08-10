@@ -32,7 +32,7 @@ async function sha1Hex(input: string) {
     .join("");
 }
 
-function normalizePageUrl(raw: string) {
+function normalizePageUrl(raw: string, requestOrigin: string | null) {
   let parsed: URL;
   try {
     parsed = new URL(raw);
@@ -41,6 +41,24 @@ function normalizePageUrl(raw: string) {
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error("页面地址必须是 http/https");
+  }
+  if (
+    parsed.pathname !== "/learning/course" &&
+    parsed.pathname !== "/learning/course/"
+  ) {
+    throw new Error("仅允许为本站课程阅读页生成飞书签名");
+  }
+  if (!requestOrigin) {
+    throw new Error("无法确认课程阅读页来源");
+  }
+  let origin: URL;
+  try {
+    origin = new URL(requestOrigin);
+  } catch {
+    throw new Error("无效的请求来源");
+  }
+  if (parsed.origin !== origin.origin) {
+    throw new Error("课程阅读页与请求来源不一致");
   }
   // 飞书签名：保留 ?query，去掉 #hash（与 location.href.split('#')[0] 一致）
   parsed.hash = "";
@@ -199,15 +217,23 @@ export default {
 
     const body = (await req.json().catch(() => ({}))) as {
       page_url?: string;
-      doc_url?: string;
+      course_id?: number;
     };
     if (!body.page_url?.trim()) {
       return jsonError("缺少 page_url", 400);
     }
 
+    const courseId = Number(body.course_id);
+    if (!Number.isInteger(courseId) || courseId <= 0) {
+      return jsonError("无效课程", 400);
+    }
+
     let pageUrl = "";
     try {
-      pageUrl = normalizePageUrl(body.page_url.trim());
+      pageUrl = normalizePageUrl(
+        body.page_url.trim(),
+        req.headers.get("origin"),
+      );
     } catch (error) {
       return jsonError(
         error instanceof Error ? error.message : "无效的页面地址",
@@ -215,13 +241,24 @@ export default {
       );
     }
 
+    const { data: content, error: contentError } = await ctx.supabase
+      .from("course_contents")
+      .select("feishu_doc_url")
+      .eq("course_id", courseId)
+      .maybeSingle();
+    if (contentError) {
+      return jsonError(contentError.message, 400);
+    }
+    if (!content?.feishu_doc_url?.trim()) {
+      return jsonError("无权访问该课程文档", 403);
+    }
+
     try {
       const appAccessToken = await getAppAccessToken(appId, appSecret);
-
-      let embedSrc: string | null = null;
-      if (body.doc_url?.trim()) {
-        embedSrc = await resolveEmbedSrc(body.doc_url.trim(), appAccessToken);
-      }
+      const embedSrc = await resolveEmbedSrc(
+        content.feishu_doc_url.trim(),
+        appAccessToken,
+      );
 
       const ticket = await getJsapiTicket(appAccessToken);
       const nonceStr = randomNonce(16);

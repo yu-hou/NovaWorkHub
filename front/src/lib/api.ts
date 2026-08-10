@@ -196,7 +196,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
           views: course.views.toLocaleString("en-US"),
           cta,
           locked,
-          href: `/learning/course?id=${course.id}`,
+          href: `/learning/course/?id=${course.id}`,
         };
       }),
     } as T;
