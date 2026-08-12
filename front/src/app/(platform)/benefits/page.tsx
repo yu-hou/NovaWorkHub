@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { UnavailableView } from "@/components/home/UnavailableView";
+import { CatalogPreviewPage } from "@/components/home/CatalogPreviewPage";
+import { BENEFITS_PAGE } from "@/lib/platform-content";
 
 export const metadata: Metadata = {
   title: "Nova 会员福利",
@@ -8,5 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default function BenefitsPage() {
-  return <UnavailableView title="会员福利暂未开放" />;
+  return (
+    <CatalogPreviewPage
+      eyebrow="MEMBER BENEFITS"
+      title="福利"
+      description="会员福利、兑换码与工具权益。当前内容仅供预览。"
+      pageId="pageBenefits"
+      content={BENEFITS_PAGE}
+      variant="benefit"
+      filterLabel="筛选福利"
+    />
+  );
 }

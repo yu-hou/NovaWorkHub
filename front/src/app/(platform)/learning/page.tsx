@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -9,7 +10,7 @@ import { ApiError, apiFetch } from "@/lib/api";
 import type { ListPageContent } from "@/lib/platform-content";
 
 export default function LearningPage() {
-  const { isLoggedIn, isMember, loading: authLoading } = useAuth();
+  const { isLoggedIn, isMember, isAdmin, loading: authLoading } = useAuth();
   const [content, setContent] = useState<ListPageContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -61,10 +62,24 @@ export default function LearningPage() {
       {loading || authLoading ? <p className="empty-state">课程加载中…</p> : null}
       {!loading && !authLoading && content ? (
         <>
-          <header className="wb-page-head">
-            <p className="wb-desk-kicker">COURSE BAY</p>
-            <h1>课程舱</h1>
-            <p>搜索、筛选后打开课程。会员舱位需登录并开通席位。</p>
+          <header className="nova-page-head">
+            <div>
+              <p className="nova-page-eyebrow">COURSE LIBRARY</p>
+              <h1>课程</h1>
+              <p>AI 课程与学习资料，覆盖工具、提示词、自动化工作流和项目交付。</p>
+            </div>
+            {isAdmin ? (
+              <Link className="nova-course-upload" href="/admin/courses#course-editor">
+                <span className="nova-course-upload-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg>
+                </span>
+                <span className="nova-course-upload-copy">
+                  <strong>上传课程</strong>
+                  <small>课程、封面与文档</small>
+                </span>
+                <span className="nova-course-upload-arrow" aria-hidden="true">↗</span>
+              </Link>
+            ) : null}
           </header>
           <ContentListView
             pageId="pageLearning"

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { UnavailableView } from "@/components/home/UnavailableView";
+import { LearningPathsView } from "@/components/home/LearningPathsView";
+import { PlatformShell } from "@/components/home/PlatformShell";
 
 export const metadata: Metadata = {
   title: "AI 学习路径｜Nova",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function LearningPathsPage() {
-  return <UnavailableView title="学习路径暂未开放" />;
+  return (
+    <PlatformShell>
+      <LearningPathsView />
+    </PlatformShell>
+  );
 }

@@ -54,9 +54,13 @@ export function LearningPathsView() {
 
   return (
     <section className="view learning-paths-page" id="pageLearningPaths">
-      <header className="learning-paths-header">
-        <h2>学习路径</h2>
-        <p>第一次来不知道学什么？选一条路线，按顺序完成每一课。</p>
+      <header className="nova-page-head learning-paths-header">
+        <div>
+          <p className="nova-page-eyebrow">GUIDED LEARNING</p>
+          <h1>学习路径</h1>
+          <p>第一次来不知道学什么？选一条路线，按顺序完成每一课。</p>
+        </div>
+        <span className="nova-preview-badge">路径预览 · 暂未开放</span>
       </header>
 
       <nav className="chip-strip learning-path-tabs" role="tablist" aria-label="学习路线">
@@ -127,14 +131,13 @@ export function LearningPathsView() {
                     </div>
                   </div>
                   <div className="lesson-action">
-                    <a
+                    <button
                       className="button-link learning-path-action"
-                      href={lesson.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      type="button"
+                      onClick={() => window.alert("学习路径将在后续版本开放，请先前往课程页学习。")}
                     >
                       去学习
-                    </a>
+                    </button>
                   </div>
                 </article>
               ))}

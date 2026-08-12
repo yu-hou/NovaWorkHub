@@ -56,13 +56,13 @@ export function HomeRecommendedCourses() {
 
   return (
     <div className="section-row">
-      <div className="section-title wb-section-title">
+      <div className="section-title nova-section-title">
         <div>
-          <p className="wb-desk-kicker">RECOMMENDED</p>
-          <h3>推荐课程舱</h3>
+          <h3>最新学习内容</h3>
+          <p>从真实课程库中为你推荐</p>
         </div>
         <a className="text-button" href="/learning">
-          打开全部
+          查看全部 <span aria-hidden="true">→</span>
         </a>
       </div>
 

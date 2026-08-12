@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { UnavailableView } from "@/components/home/UnavailableView";
+import { CatalogPreviewPage } from "@/components/home/CatalogPreviewPage";
+import { CASES_PAGE } from "@/lib/platform-content";
 
 export const metadata: Metadata = {
   title: "AI 自动化实战案例｜Nova",
@@ -8,5 +9,14 @@ export const metadata: Metadata = {
 };
 
 export default function CasesPage() {
-  return <UnavailableView title="案例暂未开放" />;
+  return (
+    <CatalogPreviewPage
+      eyebrow="MEMBER STORIES"
+      title="案例"
+      description="真实成员案例与项目拆解，看看 AI 如何在具体业务里产生结果。"
+      pageId="pageCases"
+      content={CASES_PAGE}
+      filterLabel="筛选案例"
+    />
+  );
 }

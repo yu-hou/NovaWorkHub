@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { type AdminCategory } from "@/components/admin/AdminCategoriesPage";
 import { AdminShell, friendlyError } from "@/components/admin/AdminShell";
@@ -23,6 +23,28 @@ type AdminCourse = {
   feishu_doc_url: string;
 };
 
+type CourseForm = {
+  title: string;
+  category: string;
+  category_class: string;
+  summary: string;
+  cover: string;
+  is_member_only: boolean;
+  is_published: boolean;
+  feishu_doc_url: string;
+};
+
+const EMPTY_FORM: CourseForm = {
+  title: "",
+  category: "",
+  category_class: "category-gold",
+  summary: "",
+  cover: "",
+  is_member_only: false,
+  is_published: true,
+  feishu_doc_url: "",
+};
+
 export function AdminCoursesPage() {
   const { isAdmin, loading: authLoading } = useAuth();
   const [courses, setCourses] = useState<AdminCourse[]>([]);
@@ -35,16 +57,11 @@ export function AdminCoursesPage() {
   );
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    category: "",
-    category_class: "category-gold",
-    summary: "",
-    cover: "",
-    is_member_only: false,
-    feishu_doc_url: "",
-    sort_order: 0,
-  });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [reorderingId, setReorderingId] = useState<number | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState<CourseForm>(EMPTY_FORM);
 
   const showToast = (type: "ok" | "err", text: string) => {
     setToast({ type, text });
@@ -52,6 +69,18 @@ export function AdminCoursesPage() {
   };
 
   const activeCategories = categories.filter((c) => c.is_active);
+
+  const resetForm = useCallback((categoryList = categories) => {
+    const first = categoryList.find((c) => c.is_active);
+    setEditingId(null);
+    setForm({
+      ...EMPTY_FORM,
+      category: first?.name || "",
+      category_class: first?.color_class || "category-gold",
+    });
+    setMessage("");
+    setError("");
+  }, [categories]);
 
   const load = useCallback(async () => {
     if (!isAdmin) {
@@ -124,7 +153,7 @@ export function AdminCoursesPage() {
     }
   };
 
-  const onCreate = async (event: FormEvent) => {
+  const onSave = async (event: FormEvent) => {
     event.preventDefault();
     setMessage("");
     setError("");
@@ -148,29 +177,49 @@ export function AdminCoursesPage() {
     }
     setSubmitting(true);
     try {
-      await apiFetch("/api/admin/courses", { method: "POST", body: form });
-      const text = "课程创建成功";
+      await apiFetch(
+        editingId ? `/api/admin/courses/${editingId}` : "/api/admin/courses",
+        { method: editingId ? "PATCH" : "POST", body: form },
+      );
+      const text = editingId ? "课程修改已保存" : "课程创建成功";
+      resetForm(activeCategories);
       setMessage(text);
       showToast("ok", text);
-      const first = activeCategories[0];
-      setForm({
-        title: "",
-        category: first?.name || "",
-        category_class: first?.color_class || "category-gold",
-        summary: "",
-        cover: "",
-        is_member_only: false,
-        feishu_doc_url: "",
-        sort_order: 0,
-      });
       await load();
     } catch (err) {
-      const text = friendlyError(err, "创建失败");
+      const text = friendlyError(err, editingId ? "修改失败" : "创建失败");
       setError(text);
       showToast("err", text);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const startEdit = (course: AdminCourse) => {
+    setEditingId(course.id);
+    setForm({
+      title: course.title,
+      category: course.category,
+      category_class: course.category_class,
+      summary: course.summary,
+      cover: course.cover,
+      is_member_only: course.is_member_only,
+      is_published: course.is_published,
+      feishu_doc_url: course.feishu_doc_url,
+    });
+    setMessage("");
+    setError("");
+    window.requestAnimationFrame(() => {
+      document.getElementById("course-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("courseTitle")?.focus();
+    });
+  };
+
+  const onCoverDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragActive(false);
+    if (uploading || submitting) return;
+    void onCoverFile(event.dataTransfer.files?.[0] ?? null);
   };
 
   const onDelete = async (id: number) => {
@@ -204,6 +253,38 @@ export function AdminCoursesPage() {
     }
   };
 
+  const moveCourse = async (course: AdminCourse, direction: "up" | "down") => {
+    const currentIndex = courses.findIndex((item) => item.id === course.id);
+    const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= courses.length || reorderingId !== null) return;
+
+    const reordered = [...courses];
+    [reordered[currentIndex], reordered[nextIndex]] = [reordered[nextIndex], reordered[currentIndex]];
+    const normalized = reordered.map((item, index) => ({ ...item, sort_order: index + 1 }));
+    setCourses(normalized);
+    setReorderingId(course.id);
+    setError("");
+    try {
+      await Promise.all(
+        normalized.map((item) =>
+          apiFetch(`/api/admin/courses/${item.id}`, {
+            method: "PATCH",
+            body: { sort_order: item.sort_order },
+          }),
+        ),
+      );
+      showToast("ok", direction === "up" ? "课程已上移" : "课程已下移");
+      await load();
+    } catch (err) {
+      const text = friendlyError(err, "课程顺序更新失败");
+      setError(text);
+      showToast("err", text);
+      await load();
+    } finally {
+      setReorderingId(null);
+    }
+  };
+
   return (
     <AdminShell>
       <section className="view admin-page">
@@ -225,133 +306,167 @@ export function AdminCoursesPage() {
           </button>
         </header>
 
-        <form className="admin-form admin-form-panel" onSubmit={onCreate}>
-          <h2>新增课程</h2>
-          <div className="form-grid mt-12">
+        <form
+          className={`admin-form admin-form-panel admin-course-editor${editingId ? " is-editing" : ""}`}
+          id="course-editor"
+          onSubmit={onSave}
+        >
+          <div className="admin-editor-head">
             <div>
-              <label htmlFor="courseTitle">标题</label>
-              <input
-                id="courseTitle"
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                required
-              />
+              <span className="admin-editor-kicker">{editingId ? `EDITING #${editingId}` : "NEW COURSE"}</span>
+              <h2>{editingId ? "修改课程" : "上传新课程"}</h2>
+              <p>填写展示信息、上传封面并绑定课程文档，保存后立即同步到课程页。</p>
             </div>
-            <div>
-              <label htmlFor="courseCategory">分类</label>
-              {activeCategories.length === 0 ? (
-                <p className="sub">
-                  暂无可用分类，请先去 <Link href="/admin/categories">分类管理</Link>{" "}
-                  创建。
-                </p>
-              ) : (
-                <select
-                  id="courseCategory"
-                  value={form.category}
-                  onChange={(e) => {
-                    const opt = activeCategories.find((c) => c.name === e.target.value);
-                    setForm((f) => ({
-                      ...f,
-                      category: e.target.value,
-                      category_class: opt?.color_class || "category-gold",
-                    }));
-                  }}
+            {editingId ? (
+              <button type="button" className="admin-editor-cancel" onClick={() => resetForm()}>
+                取消修改
+              </button>
+            ) : null}
+          </div>
+
+          <div className="admin-course-editor-grid">
+            <div className="admin-course-fields">
+              <div className="admin-field admin-field-wide">
+                <label htmlFor="courseTitle"><span>课程标题</span><small>必填</small></label>
+                <input
+                  id="courseTitle"
+                  value={form.title}
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                  placeholder="例如：用 Codex 搭建第一个自动化工作流"
+                  maxLength={255}
                   required
-                >
-                  {activeCategories.map((c) => (
-                    <option key={c.id} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-            <div>
-              <label htmlFor="courseSummary">简介</label>
-              <textarea
-                id="courseSummary"
-                rows={3}
-                value={form.summary}
-                onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
-              />
+                />
+                <span className="admin-field-count">{form.title.length}/255</span>
+              </div>
+
+              <div className="admin-field">
+                <label htmlFor="courseCategory"><span>课程分类</span><small>必填</small></label>
+                {activeCategories.length === 0 ? (
+                  <p className="sub">暂无可用分类，请先去 <Link href="/admin/categories">分类管理</Link> 创建。</p>
+                ) : (
+                  <select
+                    id="courseCategory"
+                    value={form.category}
+                    onChange={(e) => {
+                      const opt = activeCategories.find((c) => c.name === e.target.value);
+                      setForm((f) => ({ ...f, category: e.target.value, category_class: opt?.color_class || "category-gold" }));
+                    }}
+                    required
+                  >
+                    {activeCategories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
+                )}
+              </div>
+
+              <div className="admin-field admin-field-wide">
+                <label htmlFor="courseSummary"><span>课程简介</span><small>用于课程卡片</small></label>
+                <textarea
+                  id="courseSummary"
+                  rows={4}
+                  maxLength={500}
+                  value={form.summary}
+                  onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
+                  placeholder="用一两句话说明课程目标、适合人群和学习收获。"
+                />
+                <span className="admin-field-count">{form.summary.length}/500</span>
+              </div>
+
+              <div className="admin-field admin-field-wide">
+                <label htmlFor="courseFeishu"><span>飞书课程文档</span><small>必填</small></label>
+                <div className="admin-url-input">
+                  <span aria-hidden="true">↗</span>
+                  <input
+                    id="courseFeishu"
+                    type="url"
+                    value={form.feishu_doc_url}
+                    onChange={(e) => setForm((f) => ({ ...f, feishu_doc_url: e.target.value }))}
+                    placeholder="https://xxx.feishu.cn/docx/..."
+                    required
+                  />
+                </div>
+                <p className="admin-field-help">文档需设为“获得链接的人可阅读”，并将飞书应用添加为只读协作者。</p>
+              </div>
+
+              <div className="admin-field admin-field-wide admin-toggle-grid">
+                <label className="admin-switch-card" htmlFor="courseMemberOnly">
+                  <input
+                    id="courseMemberOnly"
+                    type="checkbox"
+                    checked={form.is_member_only}
+                    onChange={(e) => setForm((f) => ({ ...f, is_member_only: e.target.checked }))}
+                  />
+                  <span className="admin-switch" aria-hidden="true" />
+                  <span><strong>会员专享</strong><small>仅会员和管理员可以打开课程内容</small></span>
+                </label>
+                <label className="admin-switch-card" htmlFor="coursePublished">
+                  <input
+                    id="coursePublished"
+                    type="checkbox"
+                    checked={form.is_published}
+                    onChange={(e) => setForm((f) => ({ ...f, is_published: e.target.checked }))}
+                  />
+                  <span className="admin-switch" aria-hidden="true" />
+                  <span><strong>立即发布</strong><small>关闭后仅管理员可以看到该课程</small></span>
+                </label>
+              </div>
             </div>
 
-            <div className="admin-cover-field">
-              <label htmlFor="courseCoverFile">课程封面（可选）</label>
-              <p className="sub">
-                支持 JPG / PNG / WEBP / GIF，最大 4MB；上传后会自动压缩优化。
-              </p>
-              <div className="admin-cover-row">
+            <aside className="admin-cover-studio">
+              <div className="admin-cover-studio-head">
+                <div><span>课程封面</span><small>推荐 16:9</small></div>
+                {form.cover ? <button type="button" onClick={() => setForm((f) => ({ ...f, cover: "" }))}>移除</button> : null}
+              </div>
+              <div
+                className={`admin-cover-dropzone${dragActive ? " is-dragging" : ""}${uploading ? " is-uploading" : ""}`}
+                role="button"
+                tabIndex={0}
+                aria-label="选择或拖放课程封面"
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+                onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
+                onDragOver={(e) => e.preventDefault()}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={onCoverDrop}
+              >
                 <input
+                  ref={fileInputRef}
                   id="courseCoverFile"
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   disabled={uploading || submitting}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] ?? null;
-                    void onCoverFile(file);
-                    e.target.value = "";
-                  }}
+                  onChange={(e) => { void onCoverFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
                 />
                 {form.cover ? (
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() => setForm((f) => ({ ...f, cover: "" }))}
-                  >
-                    清除封面
-                  </button>
-                ) : null}
+                  <img src={mediaUrl(form.cover)} alt="课程封面预览" />
+                ) : (
+                  <div className="admin-cover-empty">
+                    <span className="admin-cover-upload-icon" aria-hidden="true">↑</span>
+                    <strong>拖放封面到这里</strong>
+                    <p>或点击选择图片</p>
+                    <small>JPG、PNG、WEBP、GIF · 最大 4MB</small>
+                  </div>
+                )}
+                {uploading ? <div className="admin-cover-progress"><span /><strong>正在压缩并上传…</strong></div> : null}
               </div>
-              {uploading ? <p className="sub">封面上传并优化中…</p> : null}
-              {form.cover ? (
-                <div className="admin-cover-preview">
-                  <img src={mediaUrl(form.cover)} alt="封面预览" />
-                  <small>{form.cover}</small>
+
+              <div className="admin-card-live-preview">
+                <span className="admin-card-preview-label">CARD PREVIEW</span>
+                <div className="admin-card-preview-cover">
+                  {form.cover ? <img src={mediaUrl(form.cover)} alt="" /> : <span>NOVA</span>}
                 </div>
-              ) : null}
-            </div>
+                <div className="admin-card-preview-copy">
+                  <span className={`category-badge ${form.category_class}`}>{form.category || "未分类"}</span>
+                  <h3>{form.title || "课程标题将在这里显示"}</h3>
+                  <p>{form.summary || "补充简洁的课程介绍，帮助学习者快速了解内容。"}</p>
+                </div>
+              </div>
+            </aside>
+          </div>
 
-            <div>
-              <label htmlFor="courseFeishu">飞书文档链接（必填）</label>
-              <input
-                id="courseFeishu"
-                value={form.feishu_doc_url}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, feishu_doc_url: e.target.value }))
-                }
-                placeholder="https://xxx.feishu.cn/docx/..."
-                required
-              />
-              <p className="sub">
-                权限请设为「获得链接的人可阅读」，并把飞书开放平台应用加为该文档协作者（只读），否则站内嵌入会失败并回退外链。
-              </p>
-            </div>
-
-            <div className="admin-toggle-card">
-              <label className="admin-check" htmlFor="courseMemberOnly">
-                <input
-                  id="courseMemberOnly"
-                  type="checkbox"
-                  checked={form.is_member_only}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, is_member_only: e.target.checked }))
-                  }
-                />
-                <span>
-                  <strong>会员专享课程</strong>
-                  <small>
-                    勾选后仅会员可看详情；不勾选则为公开课（登录即可看）。
-                  </small>
-                </span>
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting || uploading || activeCategories.length === 0}
-            >
-              {submitting ? "创建中…" : "创建课程"}
+          <div className="admin-editor-actions">
+            <div><strong>{editingId ? "正在修改已有课程" : "准备发布一门新课程"}</strong><small>封面会转为 WEBP 并上传至课程专用存储桶。</small></div>
+            <button type="submit" className="admin-editor-submit" disabled={submitting || uploading || activeCategories.length === 0}>
+              {submitting ? "保存中…" : editingId ? "保存修改" : "创建并上传课程"}
             </button>
           </div>
         </form>
@@ -377,60 +492,59 @@ export function AdminCoursesPage() {
         ) : null}
 
         {!loading && courses.length > 0 ? (
-          <div className="admin-table-wrap mt-12">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>封面</th>
-                  <th>标题</th>
-                  <th>分类</th>
-                  <th>会员</th>
-                  <th>飞书链接</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {courses.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.id}</td>
-                    <td>
-                      {c.cover ? (
-                        <img
-                          className="admin-table-thumb"
-                          src={mediaUrl(c.cover)}
-                          alt=""
-                        />
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td>{c.title}</td>
-                    <td>
-                      <span className={`category-badge ${c.category_class}`}>
-                        {c.category}
-                      </span>
-                    </td>
-                    <td>{c.is_member_only ? "是" : "否"}</td>
-                    <td className="admin-url-cell">
-                      <a href={c.feishu_doc_url} target="_blank" rel="noreferrer">
-                        {c.feishu_doc_url}
-                      </a>
-                    </td>
-                    <td className="admin-actions">
-                      <button type="button" onClick={() => void toggleMemberOnly(c)}>
-                        {c.is_member_only ? "改为公开" : "设为会员"}
-                      </button>
-                      <Link href={`/learning/course?id=${c.id}`}>预览</Link>
-                      <button type="button" onClick={() => void onDelete(c.id)}>
-                        删除
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <section className="admin-course-library mt-12" aria-labelledby="course-library-title">
+            <header className="admin-course-library-head">
+              <div>
+                <span className="admin-editor-kicker">COURSE LIBRARY</span>
+                <h2 id="course-library-title">已创建课程</h2>
+                <p>共 {courses.length} 门。使用卡片右侧按钮调整前台展示顺序，排在上方的课程会优先展示。</p>
+              </div>
+              <span className="admin-course-count">{courses.length} COURSES</span>
+            </header>
+
+            <div className="admin-course-admin-list">
+              {courses.map((c, index) => (
+                <article className="admin-course-manage-card" key={c.id}>
+                  <div className="admin-course-manage-cover">
+                    {c.cover ? <img src={mediaUrl(c.cover)} alt={`${c.title}封面`} /> : <span>NOVA</span>}
+                    <b>#{String(index + 1).padStart(2, "0")}</b>
+                  </div>
+
+                  <div className="admin-course-manage-copy">
+                    <div className="admin-course-manage-tags">
+                      <span className={`category-badge ${c.category_class}`}>{c.category}</span>
+                      <span className={`admin-pill${c.is_published ? " is-accent" : ""}`}>{c.is_published ? "已发布" : "草稿"}</span>
+                      {c.is_member_only ? <span className="admin-pill is-member">会员专享</span> : <span className="admin-pill">公开课程</span>}
+                    </div>
+                    <h3>{c.title}</h3>
+                    <p>{c.summary || "暂未填写课程简介。"}</p>
+                    <div className="admin-course-manage-meta">
+                      <span>课程 ID · {c.id}</span>
+                      <span>{c.learners.toLocaleString()} 人学习</span>
+                      <span>{c.views.toLocaleString()} 次浏览</span>
+                      <a href={c.feishu_doc_url} target="_blank" rel="noreferrer">打开飞书文档 ↗</a>
+                    </div>
+                  </div>
+
+                  <div className="admin-course-manage-controls">
+                    <div className="admin-course-order-control" aria-label={`${c.title}展示顺序`}>
+                      <span><small>前台顺序</small><strong>{String(index + 1).padStart(2, "0")}</strong></span>
+                      <div>
+                        <button type="button" disabled={index === 0 || reorderingId !== null} onClick={() => void moveCourse(c, "up")} aria-label={`上移${c.title}`}>↑<small>上移</small></button>
+                        <button type="button" disabled={index === courses.length - 1 || reorderingId !== null} onClick={() => void moveCourse(c, "down")} aria-label={`下移${c.title}`}>↓<small>下移</small></button>
+                      </div>
+                    </div>
+                    <div className="admin-course-manage-actions">
+                      <button type="button" className="admin-action-primary" onClick={() => startEdit(c)}>修改详情</button>
+                      <button type="button" onClick={() => void toggleMemberOnly(c)}>{c.is_member_only ? "改为公开" : "设为会员"}</button>
+                      <Link href={`/learning/course?id=${c.id}`}>前台预览</Link>
+                      <button type="button" className="is-danger" onClick={() => void onDelete(c.id)}>删除</button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         ) : null}
       </section>
     </AdminShell>

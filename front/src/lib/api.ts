@@ -277,6 +277,14 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
       .eq("name", categoryName)
       .single();
     if (categoryError) fail(categoryError, "课程分类不存在");
+    const { data: lastCourse, error: orderError } = await supabase
+      .from("courses")
+      .select("sort_order")
+      .order("sort_order", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (orderError) fail(orderError, "课程顺序读取失败");
     const { data: course, error } = await supabase
       .from("courses")
       .insert({
@@ -288,7 +296,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         views: body.views ?? 0,
         is_member_only: body.is_member_only ?? false,
         is_published: body.is_published ?? true,
-        sort_order: body.sort_order ?? 0,
+        sort_order: (lastCourse?.sort_order ?? 0) + 1,
       })
       .select()
       .single();

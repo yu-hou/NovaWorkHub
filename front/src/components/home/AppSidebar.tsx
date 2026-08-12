@@ -50,6 +50,7 @@ function UserSeatArt({ initial }: { initial: string }) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const currentPath = pathname === "/" ? pathname : pathname.replace(/\/$/, "");
   const { user, isLoggedIn, isAdmin, isMember, logout } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -75,34 +76,47 @@ export function AppSidebar() {
             className="sidebar-wordmark-link"
             href="/"
             title="返回官网"
-            aria-label="Nova"
+            aria-label="Nova，让 AI 真正干活"
           >
-            <span className="sidebar-brand-title">
-              <span className="brand-wordmark-text">Nova</span>
+            <span className="brand-mark" aria-hidden="true">N</span>
+            <span className="sidebar-brand-copy">
+              <span className="sidebar-brand-title">Nova</span>
+              <p>让 AI 真正干活</p>
             </span>
-            <p>工作台</p>
           </Link>
           <ThemeToggle className="sidebar-theme-toggle" />
         </div>
 
         <nav className="side-nav" aria-label="主导航">
-          {SIDE_NAV.map((item) => {
-            const Icon = NAV_ICON_MAP[item.icon];
-            const isActive =
-              pathname === item.match ||
-              (item.match !== "/home" && pathname.startsWith(`${item.match}/`));
+          {["quick", "主要", "社群", "其他"].map((group) => {
+            const items = SIDE_NAV.filter((item) => item.group === group);
+            if (items.length === 0) return null;
             return (
-              <a
-                key={item.label}
-                className={`nav-item${isActive ? " active" : ""}`}
-                href={item.href}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <span className="nav-icon">
-                  <Icon />
-                </span>
-                {item.label}
-              </a>
+              <div className={`side-nav-section side-nav-section-${group}`} key={group}>
+                {group !== "quick" ? <p className="side-nav-label">{group}</p> : null}
+                <div className="side-nav-group">
+                  {items.map((item) => {
+                    const Icon = NAV_ICON_MAP[item.icon];
+                    const isActive =
+                      currentPath === item.match ||
+                      (item.match !== "/home" && currentPath.startsWith(`${item.match}/`));
+                    return (
+                      <Link
+                        key={item.label}
+                        className={`nav-item${isActive ? " active" : ""}`}
+                        href={item.href}
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        <span className="nav-icon"><Icon /></span>
+                        <span className="nav-label">{item.label}</span>
+                        {item.href !== "/home" && item.href !== "/learning" ? (
+                          <span className="nav-preview-dot" title="预览内容" aria-label="预览内容" />
+                        ) : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>

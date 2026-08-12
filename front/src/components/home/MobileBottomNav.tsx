@@ -8,17 +8,26 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import {
   NAV_ICON_MAP,
   NavCourseIcon,
+  NavGiftIcon,
   NavHomeIcon,
   NavMoreIcon,
+  NavPathIcon,
 } from "@/components/home/home-icons";
 
 const BASE_ITEMS = [
-  { href: "/home", label: "工作台", match: "/home", Icon: NavHomeIcon },
+  { href: "/home", label: "首页", match: "/home", Icon: NavHomeIcon },
+  { href: "/learning-paths", label: "路径", match: "/learning-paths", Icon: NavPathIcon },
   { href: "/learning", label: "课程", match: "/learning", Icon: NavCourseIcon },
+  { href: "/benefits", label: "福利", match: "/benefits", Icon: NavGiftIcon },
 ] as const;
 
 const MORE_NAV: { label: string; href: string; icon: keyof typeof NAV_ICON_MAP; match: string }[] =
-  [];
+  [
+    { label: "案例", href: "/cases", icon: "case", match: "/cases" },
+    { label: "活动", href: "/events", icon: "event", match: "/events" },
+    { label: "直播", href: "/replays", icon: "live", match: "/replays" },
+    { label: "关于", href: "/about", icon: "about", match: "/about" },
+  ];
 
 function AdminNavIcon() {
   return (
@@ -62,13 +71,10 @@ function CloseIcon() {
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const currentPath = pathname === "/" ? pathname : pathname.replace(/\/$/, "");
   const { user, isLoggedIn, isAdmin, isMember, logout } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
   const sheetId = useId();
-
-  useEffect(() => {
-    setMoreOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -85,12 +91,12 @@ export function MobileBottomNav() {
 
   const moreActive =
     moreOpen ||
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/admin") ||
+    currentPath.startsWith("/account") ||
+    currentPath.startsWith("/admin") ||
     MORE_NAV.some(
       (item) =>
         "match" in item &&
-        (pathname === item.match || pathname.startsWith(`${item.match}/`)),
+        (currentPath === item.match || currentPath.startsWith(`${item.match}/`)),
     );
 
   return (
@@ -98,8 +104,8 @@ export function MobileBottomNav() {
       <nav className="mobile-bottom-nav" aria-label="移动端主导航">
         {BASE_ITEMS.map((item) => {
           const active =
-            pathname === item.match ||
-            (item.match !== "/home" && pathname.startsWith(`${item.match}/`));
+            currentPath === item.match ||
+            (item.match !== "/home" && currentPath.startsWith(`${item.match}/`));
           const Icon = item.Icon;
           return (
             <a
@@ -107,6 +113,7 @@ export function MobileBottomNav() {
               className={`mobile-bottom-item${active ? " active" : ""}`}
               href={item.href}
               aria-current={active ? "page" : undefined}
+              onClick={() => setMoreOpen(false)}
             >
               <span className="mobile-bottom-icon">
                 <Icon />
@@ -194,7 +201,7 @@ export function MobileBottomNav() {
               {MORE_NAV.map((item) => {
                 const Icon = NAV_ICON_MAP[item.icon];
                 const active =
-                  pathname === item.match || pathname.startsWith(`${item.match}/`);
+                  currentPath === item.match || currentPath.startsWith(`${item.match}/`);
                 return (
                   <a
                     key={item.label}
@@ -220,7 +227,7 @@ export function MobileBottomNav() {
             {isAdmin ? (
               <Link
                 className={`mobile-more-item mobile-more-item-wide${
-                  pathname.startsWith("/admin") ? " active" : ""
+                  currentPath.startsWith("/admin") ? " active" : ""
                 }`}
                 href="/admin"
                 onClick={() => setMoreOpen(false)}
@@ -235,7 +242,7 @@ export function MobileBottomNav() {
               <>
                 <Link
                   className={`mobile-more-item${
-                    pathname.startsWith("/account/security") ? " active" : ""
+                    currentPath.startsWith("/account/security") ? " active" : ""
                   }`}
                   href="/account/security"
                   onClick={() => setMoreOpen(false)}

@@ -20,8 +20,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
 
   return (
     <ContentGateProvider>
-      <div className="bg-cosmos wb-app-atmosphere" aria-hidden="true" />
-      <div className="app-shell wb-app-shell">
+      <div className="app-shell wb-app-shell nova-workspace">
         <AppSidebar />
         <main className="main-panel wb-main-panel">{children}</main>
         <MobileBottomNav />

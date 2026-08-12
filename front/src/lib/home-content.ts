@@ -72,11 +72,29 @@ export const DESK_MODULES: DeskModule[] = [
     subtitle: "打开可学内容",
     href: "/learning",
   },
+  {
+    code: "02",
+    title: "学习路径",
+    subtitle: "按路线逐步推进",
+    href: "/learning-paths",
+  },
+  {
+    code: "03",
+    title: "案例库",
+    subtitle: "查看成员实战",
+    href: "/cases",
+  },
 ];
 
 export const SIDE_NAV = [
-  { label: "工作台", href: "/home", icon: "home", match: "/home" },
-  { label: "课程舱", href: "/learning", icon: "course", match: "/learning" },
+  { label: "首页", href: "/home", icon: "home", match: "/home", group: "quick" },
+  { label: "学习路径", href: "/learning-paths", icon: "path", match: "/learning-paths", group: "主要" },
+  { label: "课程", href: "/learning", icon: "course", match: "/learning", group: "主要" },
+  { label: "案例", href: "/cases", icon: "case", match: "/cases", group: "主要" },
+  { label: "活动", href: "/events", icon: "event", match: "/events", group: "主要" },
+  { label: "直播", href: "/replays", icon: "live", match: "/replays", group: "主要" },
+  { label: "福利", href: "/benefits", icon: "gift", match: "/benefits", group: "社群" },
+  { label: "关于", href: "/about", icon: "about", match: "/about", group: "其他" },
 ] as const;
 
 export const BANNER_DURATION_MS = 5200;
