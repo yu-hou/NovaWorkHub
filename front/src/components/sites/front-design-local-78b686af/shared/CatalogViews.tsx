@@ -7,9 +7,22 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useContentGate } from "@/components/auth/ContentGate";
 import { LearnersIcon, ViewsIcon } from "@/components/ui/CourseMetricsIcons";
 import { ApiError, apiFetch, mediaUrl } from "@/lib/api";
-import type { ListPageContent, PlatformCard } from "@/lib/platform-content";
+import { LEARNING_PAGE, type ListPageContent, type PlatformCard } from "@/lib/platform-content";
 
 type CourseAction = "up" | "down" | "delete";
+
+function mockCourseContent(): ListPageContent {
+  return {
+    ...LEARNING_PAGE,
+    categories: LEARNING_PAGE.categories.map((item) => ({ ...item })),
+    cards: LEARNING_PAGE.cards.map((card) => ({
+      ...card,
+      href: `/learning/course/?id=${card.id}`,
+      cta: "查看课程",
+      locked: false,
+    })),
+  };
+}
 
 function CourseCard({ card, index, isAdmin, busy, canMoveUp, canMoveDown, onOpen, onAction }: {
   card: PlatformCard;
@@ -121,10 +134,16 @@ export function CoursesView() {
   const loadCourses = useCallback(async () => {
     setLoading(true);
     try {
-      setContent(await apiFetch<ListPageContent>("/api/courses"));
+      const nextContent = await apiFetch<ListPageContent>("/api/courses");
+      setContent(nextContent.cards.length > 0 ? nextContent : mockCourseContent());
       setError("");
     } catch (caught: unknown) {
-      setError(caught instanceof ApiError ? caught.detail : caught instanceof Error ? caught.message : "课程加载失败");
+      setContent(mockCourseContent());
+      setError("");
+      console.warn(
+        "课程后端数据暂不可用，已使用本地模拟数据。",
+        caught instanceof ApiError ? caught.detail : caught,
+      );
     } finally {
       setLoading(false);
     }
@@ -252,11 +271,11 @@ export function CoursesView() {
 export function EventsView() {
   return (
     <section className="view" id="pageEvents">
-      <div className="page-head">
+      <div className="page-head event-page-head">
         <h2>活动</h2>
         <p>社群活动、直播与回放，按最新整理，和课程页保持同一套阅读节奏。</p>
       </div>
-      <div className="course-toolbar">
+      <div className="course-toolbar event-toolbar">
         <div className="course-search">
           <input
             type="search"
@@ -284,12 +303,12 @@ export function EventsView() {
 export function CasesView() {
   return (
     <section className="view" id="pageCases">
-      <div className="page-head">
+      <div className="page-head event-page-head">
         <h2>案例</h2>
         <p>真实成员案例，按最新整理，和活动页保持同一套卡片规范。</p>
       </div>
-      <div className="case-toolbar">
-        <div className="case-search">
+      <div className="course-toolbar case-toolbar">
+        <div className="course-search">
           <input
             type="search"
             id="caseSearch"
@@ -297,7 +316,7 @@ export function CasesView() {
             aria-label="搜索案例"
           />
         </div>
-        <div className="case-controls">
+        <div className="course-tools">
           <div
             className="course-chips"
             id="caseCategoryFilter"
