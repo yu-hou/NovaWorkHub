@@ -328,6 +328,94 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     } as T;
   }
 
+  const catalogPath = catalogPageFromPath(path);
+  if (catalogPath && method === "GET" && !path.includes("/admin/")) {
+    return loadCatalogPage(catalogPath.page);
+  }
+
+  if (catalogPath && path.includes("/admin/")) {
+    if (method === "GET" && catalogPath.id === null) {
+      return loadCatalogPage(catalogPath.page, true);
+    }
+    if (method === "POST" && catalogPath.id === null) {
+      const page = catalogPath.page;
+      const tags = uniqueTags(body.tags);
+      const { data: lastItem, error: orderError } = await supabase
+        .from("catalog_items")
+        .select("sort_order")
+        .eq("page", page)
+        .order("sort_order", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (orderError) fail(orderError, "内容顺序读取失败");
+
+      const { data, error } = await supabase
+        .from("catalog_items")
+        .insert({
+          page,
+          title: String(body.title ?? "").trim(),
+          summary: String(body.summary ?? "").trim(),
+          category: String(body.category ?? "").trim(),
+          category_class: String(body.category_class ?? "category-gold"),
+          tags,
+          cover: String(body.cover ?? "").trim(),
+          learners: Number(body.learners ?? 0),
+          views: Number(body.views ?? 0),
+          cta: String(body.cta ?? (page === "events" ? "查看详情" : "查看案例")).trim(),
+          is_member_only: Boolean(body.is_member_only),
+          is_published: body.is_published !== false,
+          sort_order: Number(body.sort_order ?? (lastItem?.sort_order ?? 0) + 1),
+          href: String(body.href ?? "").trim() || null,
+        })
+        .select()
+        .single();
+      if (error) fail(error, "创建内容失败");
+      return catalogAdminOut(data as CatalogItemRow) as T;
+    }
+    if (method === "PATCH" && catalogPath.id !== null) {
+      const patch: Record<string, unknown> = {};
+      for (const key of [
+        "title",
+        "summary",
+        "category",
+        "category_class",
+        "cover",
+        "cta",
+        "href",
+        "learners",
+        "views",
+        "sort_order",
+        "is_member_only",
+        "is_published",
+      ]) {
+        if (body[key] !== undefined) patch[key] = body[key];
+      }
+      if (body.tags !== undefined) patch.tags = uniqueTags(body.tags);
+      for (const key of ["title", "summary", "category", "category_class", "cover", "cta", "href"]) {
+        if (patch[key] !== undefined) {
+          patch[key] = String(patch[key] ?? "").trim() || (key === "href" ? null : "");
+        }
+      }
+      const { error } = await supabase
+        .from("catalog_items")
+        .update(patch)
+        .eq("page", catalogPath.page)
+        .eq("id", catalogPath.id);
+      if (error) fail(error, "更新内容失败");
+      return { id: catalogPath.id } as T;
+    }
+    if (method === "DELETE" && catalogPath.id !== null) {
+      const { error } = await supabase
+        .from("catalog_items")
+        .delete()
+        .eq("page", catalogPath.page)
+        .eq("id", catalogPath.id);
+      if (error) fail(error, "删除内容失败");
+      return { message: "内容已删除" } as T;
+    }
+  }
+
   const courseDetail = path.match(/^\/api\/courses\/(\d+)$/);
   if (courseDetail && method === "GET") {
     return invoke<T>("course-access", { course_id: Number(courseDetail[1]) });
@@ -494,10 +582,12 @@ async function optimizeCover(file: File) {
 }
 
 export async function apiUpload<T>(path: string, file: File): Promise<T> {
-  if (path !== "/api/admin/uploads/cover") throw new ApiError(404, "未知上传路径");
+  if (path !== "/api/admin/uploads/cover" && path !== "/api/admin/uploads/catalog-cover") {
+    throw new ApiError(404, "未知上传路径");
+  }
   if (file.size > 4 * 1024 * 1024) throw new ApiError(400, "图片不能超过 4MB");
   const { blob, width, height } = await optimizeCover(file);
-  const objectPath = `covers/${crypto.randomUUID()}.webp`;
+  const objectPath = `${path.endsWith("catalog-cover") ? "catalog-covers" : "covers"}/${crypto.randomUUID()}.webp`;
   const supabase = getSupabase();
   const { error } = await supabase.storage.from("course-covers").upload(objectPath, blob, {
     contentType: "image/webp",

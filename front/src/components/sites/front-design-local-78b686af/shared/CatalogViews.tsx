@@ -2,15 +2,56 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
+import { ImageUp, ListPlus, PencilLine, Rows3 } from "lucide-react";
 
+import { COLOR_OPTIONS } from "@/components/admin/AdminCategoriesPage";
+import { friendlyError } from "@/components/admin/AdminShell";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useContentGate } from "@/components/auth/ContentGate";
 import { LearnersIcon, ViewsIcon } from "@/components/ui/CourseMetricsIcons";
-import { ApiError, apiFetch, mediaUrl } from "@/lib/api";
-import { LEARNING_PAGE, type ListPageContent, type PlatformCard } from "@/lib/platform-content";
+import { ApiError, apiFetch, apiUpload, mediaUrl } from "@/lib/api";
+import {
+  CASES_PAGE,
+  EVENTS_PAGE,
+  LEARNING_PAGE,
+  type CategoryChip,
+  type ListPageContent,
+  type PlatformCard,
+} from "@/lib/platform-content";
 
 type CourseAction = "up" | "down" | "delete";
+type CatalogKind = "courses" | "events" | "cases";
+type CatalogMode = "cards" | "manage";
+
+type AdminCatalogItem = {
+  id: number;
+  page?: "events" | "cases";
+  title: string;
+  summary: string;
+  category: string;
+  category_class: string;
+  tags: string[];
+  cover: string;
+  learners: number;
+  views: number;
+  cta: string;
+  is_member_only: boolean;
+  is_published: boolean;
+  sort_order: number;
+  href?: string;
+  feishu_doc_url?: string;
+};
+
+const DEFAULT_CATEGORY_CLASS = "category-gold";
 
 function mockCourseContent(): ListPageContent {
   return {
