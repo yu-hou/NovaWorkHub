@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { LearningPathsView } from "@/components/home/LearningPathsView";
-import { PlatformShell } from "@/components/home/PlatformShell";
+import { LearningPathsView } from "@/components/sites/front-design-local-78b686af/learning-paths-html-c7677f58/LearningPathsView";
+import FrontDesignShell from "@/components/sites/front-design-local-78b686af/shared/FrontDesignShell";
 
 export const metadata: Metadata = {
   title: "AI 学习路径｜Nova",
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function LearningPathsPage() {
   return (
-    <PlatformShell>
+    <FrontDesignShell page="paths">
       <LearningPathsView />
-    </PlatformShell>
+    </FrontDesignShell>
   );
 }

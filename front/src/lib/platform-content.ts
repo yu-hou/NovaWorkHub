@@ -10,6 +10,7 @@ export type CategoryChip = {
 
 export type PlatformCard = {
   id?: string;
+  sortOrder?: number;
   title: string;
   category?: string | null;
   categoryClass?: string | null;

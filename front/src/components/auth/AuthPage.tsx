@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { LoginForm } from "@/components/home/LoginForm";
+import { LoginForm } from "@/components/auth/LoginForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 type AuthPageProps = {

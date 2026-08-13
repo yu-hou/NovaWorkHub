@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { FeishuDocsViewer } from "@/components/home/FeishuDocsViewer";
+import { FeishuDocsViewer } from "@/components/course/FeishuDocsViewer";
 import { ApiError, apiFetch } from "@/lib/api";
 
 type CourseDetail = {

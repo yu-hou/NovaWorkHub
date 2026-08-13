@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { CatalogPreviewPage } from "@/components/home/CatalogPreviewPage";
-import { CASES_PAGE } from "@/lib/platform-content";
+import { CasesView } from "@/components/sites/front-design-local-78b686af/shared/CatalogViews";
+import FrontDesignShell from "@/components/sites/front-design-local-78b686af/shared/FrontDesignShell";
 
 export const metadata: Metadata = {
   title: "AI 自动化实战案例｜Nova",
@@ -10,13 +10,8 @@ export const metadata: Metadata = {
 
 export default function CasesPage() {
   return (
-    <CatalogPreviewPage
-      eyebrow="MEMBER STORIES"
-      title="案例"
-      description="真实成员案例与项目拆解，看看 AI 如何在具体业务里产生结果。"
-      pageId="pageCases"
-      content={CASES_PAGE}
-      filterLabel="筛选案例"
-    />
+    <FrontDesignShell page="cases">
+      <CasesView />
+    </FrontDesignShell>
   );
 }

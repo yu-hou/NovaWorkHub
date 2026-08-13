@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { CatalogPreviewPage } from "@/components/home/CatalogPreviewPage";
-import { EVENTS_PAGE } from "@/lib/platform-content";
+import { EventsView } from "@/components/sites/front-design-local-78b686af/shared/CatalogViews";
+import FrontDesignShell from "@/components/sites/front-design-local-78b686af/shared/FrontDesignShell";
 
 export const metadata: Metadata = {
   title: "AI 共学活动｜Nova",
@@ -10,13 +10,8 @@ export const metadata: Metadata = {
 
 export default function EventsPage() {
   return (
-    <CatalogPreviewPage
-      eyebrow="COMMUNITY EVENTS"
-      title="活动"
-      description="社群活动、主题分享与实战共创，按最新内容整理。"
-      pageId="pageEvents"
-      content={EVENTS_PAGE}
-      filterLabel="筛选活动"
-    />
+    <FrontDesignShell page="events">
+      <EventsView />
+    </FrontDesignShell>
   );
 }

@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import "../home.css";
 import "../workbench.css";
 import "../platform-refresh.css";
+import "../front-design.css";
+import "../admin-refresh.css";
 
 export const metadata: Metadata = {
   title: "Nova 工作台",

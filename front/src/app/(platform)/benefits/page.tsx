@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { CatalogPreviewPage } from "@/components/home/CatalogPreviewPage";
-import { BENEFITS_PAGE } from "@/lib/platform-content";
+import { BenefitsView } from "@/components/sites/front-design-local-78b686af/shared/CatalogViews";
+import FrontDesignShell from "@/components/sites/front-design-local-78b686af/shared/FrontDesignShell";
 
 export const metadata: Metadata = {
   title: "Nova 会员福利",
@@ -10,14 +10,8 @@ export const metadata: Metadata = {
 
 export default function BenefitsPage() {
   return (
-    <CatalogPreviewPage
-      eyebrow="MEMBER BENEFITS"
-      title="福利"
-      description="会员福利、兑换码与工具权益。当前内容仅供预览。"
-      pageId="pageBenefits"
-      content={BENEFITS_PAGE}
-      variant="benefit"
-      filterLabel="筛选福利"
-    />
+    <FrontDesignShell page="benefits">
+      <BenefitsView />
+    </FrontDesignShell>
   );
 }

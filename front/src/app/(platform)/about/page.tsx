@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 
-import { UnavailableView } from "@/components/home/UnavailableView";
+import AboutView from "@/components/sites/front-design-local-78b686af/shared/AboutView";
+import FrontDesignShell from "@/components/sites/front-design-local-78b686af/shared/FrontDesignShell";
 
 export const metadata: Metadata = {
-  title: "关于 Nova｜AI Agent 实战学习社群",
-  description: "了解 Nova AI 实战学习社群。",
+  title: "关于 AgentWork｜AI Agent 实战学习社群",
+  description: "了解 AgentWork AI 实战学习社群。",
 };
 
 export default function AboutPage() {
-  return <UnavailableView title="关于页暂未开放" />;
+  return (
+    <FrontDesignShell page="about">
+      <AboutView />
+    </FrontDesignShell>
+  );
 }

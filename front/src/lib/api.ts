@@ -187,6 +187,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
             : "查看课程";
         return {
           id: String(course.id),
+          sortOrder: course.sort_order,
           title: course.title,
           category: category?.name,
           categoryClass: category?.color_class,

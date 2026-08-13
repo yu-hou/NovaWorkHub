@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { LoginForm } from "@/components/home/LoginForm";
+import { LoginForm } from "@/components/auth/LoginForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ApiError } from "@/lib/api";
 
@@ -27,23 +27,39 @@ export function friendlyError(err: unknown, fallback = "操作失败") {
 }
 
 const ADMIN_NAV = [
-  { href: "/admin", label: "概览", match: (p: string) => p === "/admin" },
+  { href: "/admin", label: "概览", icon: "overview", match: (p: string) => p === "/admin" },
   {
     href: "/admin/users",
     label: "用户管理",
+    icon: "users",
     match: (p: string) => p.startsWith("/admin/users"),
   },
   {
     href: "/admin/categories",
     label: "分类管理",
+    icon: "categories",
     match: (p: string) => p.startsWith("/admin/categories"),
   },
   {
     href: "/admin/courses",
     label: "课程管理",
+    icon: "courses",
     match: (p: string) => p.startsWith("/admin/courses"),
   },
 ] as const;
+
+function AdminNavIcon({ name }: { name: (typeof ADMIN_NAV)[number]["icon"] }) {
+  if (name === "users") {
+    return <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M16 6.5a3 3 0 0 1 0 5.8M17.5 15a5 5 0 0 1 4 5" /></svg>;
+  }
+  if (name === "categories") {
+    return <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></svg>;
+  }
+  if (name === "courses") {
+    return <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H21v16H6.5A2.5 2.5 0 0 0 4 21.5zM4 5.5v16M8 7h9M8 11h7" /></svg>;
+  }
+  return <svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z" /></svg>;
+}
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -77,7 +93,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <div className="admin-login-panel">
             <div className="admin-login-brand">
               <div>
-                <span className="brand-wordmark-text">Nova</span>
+                <span className="admin-brand-mark">AW</span>
+                <span className="admin-brand-name">AgentWork</span>
                 <p>管理后台</p>
               </div>
               <ThemeToggle className="sidebar-theme-toggle" />
@@ -93,7 +110,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <button type="button" onClick={logout}>
                   退出当前账号
                 </button>
-                <Link href="/home">返回工作台</Link>
+                <a href="/home">返回工作台</a>
               </div>
             ) : (
               <LoginForm
@@ -104,7 +121,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               />
             )}
             <p className="sub admin-login-foot">
-              <Link href="/home">← 返回工作台</Link>
+              <a href="/home">← 返回工作台</a>
             </p>
           </div>
         </div>
@@ -119,28 +136,34 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <aside className="admin-sidebar" aria-label="管理导航">
           <div className="admin-side-brand">
             <Link href="/admin" className="admin-side-brand-link">
-              <span className="brand-wordmark-text">Nova</span>
-              <small>Admin</small>
+              <span className="admin-brand-mark">AW</span>
+              <span className="admin-brand-copy">
+                <strong>AgentWork</strong>
+                <small>管理后台</small>
+              </span>
             </Link>
             <ThemeToggle className="sidebar-theme-toggle" />
           </div>
 
           <nav className="admin-side-nav">
+            <span className="admin-side-label">工作区</span>
             {ADMIN_NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`admin-side-link${item.match(pathname) ? " is-active" : ""}`}
               >
-                {item.label}
+                <span className="admin-side-link-icon"><AdminNavIcon name={item.icon} /></span>
+                <span>{item.label}</span>
               </Link>
             ))}
           </nav>
 
           <div className="admin-side-foot">
-            <Link href="/home" className="admin-side-link admin-side-link-muted">
-              返回前台
-            </Link>
+            <a href="/home" className="admin-side-link admin-side-link-muted">
+              <span className="admin-side-link-icon" aria-hidden="true">↗</span>
+              <span>返回前台</span>
+            </a>
             <div className="admin-side-user">
               <div>
                 <strong>{user?.display_name || "管理员"}</strong>

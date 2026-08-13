@@ -61,6 +61,7 @@ export function AdminCoursesPage() {
   const [reorderingId, setReorderingId] = useState<number | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const deepLinkHandledRef = useRef(false);
   const [form, setForm] = useState<CourseForm>(EMPTY_FORM);
 
   const showToast = (type: "ok" | "err", text: string) => {
@@ -117,6 +118,30 @@ export function AdminCoursesPage() {
     if (authLoading) return;
     void load();
   }, [authLoading, load]);
+
+  useEffect(() => {
+    if (deepLinkHandledRef.current || courses.length === 0) return;
+    const id = Number(new URLSearchParams(window.location.search).get("edit"));
+    if (!Number.isInteger(id) || id <= 0) return;
+    const course = courses.find((item) => item.id === id);
+    if (!course) return;
+    deepLinkHandledRef.current = true;
+    setEditingId(course.id);
+    setForm({
+      title: course.title,
+      category: course.category,
+      category_class: course.category_class,
+      summary: course.summary,
+      cover: course.cover,
+      is_member_only: course.is_member_only,
+      is_published: course.is_published,
+      feishu_doc_url: course.feishu_doc_url,
+    });
+    window.requestAnimationFrame(() => {
+      document.getElementById("course-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("courseTitle")?.focus();
+    });
+  }, [courses]);
 
   const onCoverFile = async (file: File | null) => {
     if (!file) return;

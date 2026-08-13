@@ -175,7 +175,7 @@ export function AdminUsersPage() {
                 <option value="admin">管理员</option>
               </select>
             </div>
-            <label className="admin-check" htmlFor="newUserMember">
+            <label className="admin-check admin-member-check" htmlFor="newUserMember">
               <input
                 id="newUserMember"
                 type="checkbox"
