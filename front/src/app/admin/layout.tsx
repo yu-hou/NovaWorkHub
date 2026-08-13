@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import "../home.css";
 import "../workbench.css";
+import "../admin-refresh.css";
 
 export const metadata: Metadata = {
   title: "Nova 管理后台",

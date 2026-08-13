@@ -590,9 +590,7 @@ p { text-wrap: pretty; }
     .path-lesson-cta { width: 100%; }
 }
 
-/* ----- 课程页（课程卡采用 project-card-design.md 的 Project Brief Card 结构）-----
-   课程卡从「封面 + 摘要 + CTA」改为项目简报卡：Header（来源/状态/更多）、
-   独立圆角封面、标题、分类标签、事实行。背景仍使用 canvas-soft，因为课程卡位于白色 main-panel 内。 */
+/* ----- 课程页 / 活动页：统一使用参考卡片（314 × 426）结构 ----- */
 .course-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .course-search-actions { display: flex; flex: 1 1 420px; align-items: center; gap: 10px; min-width: 0; }
 .course-search { flex: 1 1 240px; max-width: 320px; }
@@ -624,6 +622,10 @@ p { text-wrap: pretty; }
 .event-toolbar .course-tools { flex: 0 0 auto; }
 
 .course-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; align-items: stretch; }
+#courseGrid {
+    align-items: start;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .course-card {
     min-width: 0; min-height: 100%; display: flex; flex-direction: column; gap: 16px; text-align: left; width: 100%;
     padding: 22px 16px 20px; border: 1px solid var(--border-soft); border-radius: var(--radius-shell);
@@ -717,14 +719,18 @@ p { text-wrap: pretty; }
     align-items: start;
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-#eventsGrid .event-card {
+#eventsGrid .event-card,
+#courseGrid .event-card {
     display: flex; width: 100%; min-width: 0; min-height: 426px; flex-direction: column; overflow: hidden;
+    position: relative;
     border: 0; border-radius: 12px; background: #fafafb; color: #3c3c43; cursor: pointer;
     box-shadow: inset 0 0 0 .5px rgba(99,99,99,.14);
     transition: transform 180ms var(--ease-out), background 180ms var(--ease-out);
 }
-#eventsGrid .event-card:hover { background: #f5f5f7; transform: translateY(-2px); }
-#eventsGrid .event-card:active { transform: scale(.992); }
+#eventsGrid .event-card:hover,
+#courseGrid .event-card:hover { background: #f5f5f7; transform: translateY(-2px); }
+#eventsGrid .event-card:active,
+#courseGrid .event-card:active { transform: scale(.992); }
 .event-card-cover {
     position: relative; height: 222px; flex: 0 0 auto; overflow: hidden; background: #dedede;
 }
@@ -732,8 +738,12 @@ p { text-wrap: pretty; }
     content: ""; position: absolute; inset: 0; pointer-events: none;
     box-shadow: inset 0 -1px 0 rgba(0,0,0,.04);
 }
-.event-card-cover img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform 420ms var(--ease-out); }
-#eventsGrid .event-card:hover .event-card-cover img { transform: scale(1.03); }
+.event-card-cover img {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+    object-fit: cover; transition: transform 420ms var(--ease-out);
+}
+#eventsGrid .event-card:hover .event-card-cover img,
+#courseGrid .event-card:hover .event-card-cover img { transform: scale(1.03); }
 .event-card-tags {
     position: absolute; left: 24px; right: 24px; bottom: 12px; z-index: 1;
     display: flex; align-items: center; gap: 8px; overflow: hidden;
@@ -779,8 +789,21 @@ p { text-wrap: pretty; }
     font-size: 12px; font-weight: 400; line-height: 15px; white-space: nowrap;
     transition: background 150ms var(--ease-out), transform 150ms var(--ease-out);
 }
-#eventsGrid .event-card:hover .event-card-action { background: #27272c; }
-#eventsGrid .event-card:active .event-card-action { transform: scale(.97); }
+#eventsGrid .event-card:hover .event-card-action,
+#courseGrid .event-card:hover .event-card-action { background: #27272c; }
+#eventsGrid .event-card:active .event-card-action,
+#courseGrid .event-card:active .event-card-action { transform: scale(.97); }
+
+#courseGrid .course-card-actions-floating {
+    position: absolute; z-index: 3; top: 12px; right: 12px;
+}
+#courseGrid .course-card-menu {
+    width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.7); border-radius: 10px;
+    background: rgba(255,255,255,.86); color: #3c3c43; box-shadow: 0 8px 18px rgba(0,0,0,.10);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+#courseGrid .course-card-menu:hover { background: #fff; color: #000; }
+#courseGrid .course-card-action-menu { top: calc(100% + 8px); right: 0; }
 
 /* ----- 直播页（空态：保留参考图的信息结构，视觉贴合 AgentWork 的暖白工作台） ----- */
 .live-replay-view {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -54,7 +55,7 @@ function CourseCard({ card, index, isAdmin, busy, canMoveUp, canMoveDown, onOpen
 
   return (
     <article
-      className="course-card rise-in"
+      className="event-card course-event-card rise-in"
       style={{ animationDelay: `${index * 40}ms` }}
       tabIndex={0}
       role="button"
@@ -62,60 +63,55 @@ function CourseCard({ card, index, isAdmin, busy, canMoveUp, canMoveDown, onOpen
       onClick={() => onOpen(card)}
       onKeyDown={openFromKeyboard}
     >
-      <header className="course-card-header">
-        <div className="course-card-avatar" data-course-id={card.id} aria-hidden="true" />
-        <div className="course-card-identity">
-          <strong>AgentWork</strong>
-          <span>持续更新</span>
+      {isAdmin ? (
+        <div className="course-card-actions course-card-actions-floating" ref={menuRef}>
+          <button
+            type="button"
+            className="course-card-menu"
+            aria-label={`管理课程：${card.title}`}
+            aria-expanded={menuOpen}
+            onClick={(event) => {
+              event.stopPropagation();
+              setMenuOpen((open) => !open);
+            }}
+          >•••</button>
+          {menuOpen ? (
+            <div className="course-card-action-menu" role="menu" onClick={(event) => event.stopPropagation()}>
+              <Link role="menuitem" href={`/admin/courses?edit=${card.id}#course-editor`}>编辑详情</Link>
+              <button type="button" role="menuitem" disabled={!canMoveUp || busy} onClick={() => { setMenuOpen(false); onAction(card, "up"); }}>上移一位</button>
+              <button type="button" role="menuitem" disabled={!canMoveDown || busy} onClick={() => { setMenuOpen(false); onAction(card, "down"); }}>下移一位</button>
+              <button type="button" role="menuitem" className="is-danger" disabled={busy} onClick={() => { setMenuOpen(false); onAction(card, "delete"); }}>删除课程</button>
+            </div>
+          ) : null}
         </div>
-        {isAdmin ? (
-          <div className="course-card-actions" ref={menuRef}>
-            <button
-              type="button"
-              className="course-card-menu"
-              aria-label={`管理课程：${card.title}`}
-              aria-expanded={menuOpen}
-              onClick={(event) => {
-                event.stopPropagation();
-                setMenuOpen((open) => !open);
-              }}
-            >•••</button>
-            {menuOpen ? (
-              <div className="course-card-action-menu" role="menu" onClick={(event) => event.stopPropagation()}>
-                <Link role="menuitem" href={`/admin/courses?edit=${card.id}#course-editor`}>编辑详情</Link>
-                <button type="button" role="menuitem" disabled={!canMoveUp || busy} onClick={() => { setMenuOpen(false); onAction(card, "up"); }}>上移一位</button>
-                <button type="button" role="menuitem" disabled={!canMoveDown || busy} onClick={() => { setMenuOpen(false); onAction(card, "down"); }}>下移一位</button>
-                <button type="button" role="menuitem" className="is-danger" disabled={busy} onClick={() => { setMenuOpen(false); onAction(card, "delete"); }}>删除课程</button>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </header>
-      <div className="course-card-media">
+      ) : null}
+      <div className="event-card-cover">
         {card.cover ? (
-          <img src={mediaUrl(card.cover)} alt={`${card.title} 课程封面`} loading="lazy" />
+          <Image src={mediaUrl(card.cover)} alt={`${card.title} 课程封面`} fill sizes="(max-width: 760px) calc(100vw - 28px), (max-width: 980px) calc((100vw - 302px) / 2), 30vw" />
         ) : (
           <div className="course-card-cover-fallback">AW</div>
         )}
+        <div className="event-card-tags" aria-label="课程标签">
+          {card.category ? <span className="event-card-tag">{card.category}</span> : null}
+          <span className="event-card-tag">课程</span>
+          <span className="event-card-tag">{card.locked ? "会员专享" : "可学习"}</span>
+          <span className="event-card-tag">{card.learners || "0"}人</span>
+        </div>
       </div>
-      <div className="course-card-body">
+      <div className="event-card-body">
         <h4>{card.title}</h4>
-        <div className="course-card-tags">
-          {card.category ? <span className="course-card-tag">{card.category}</span> : null}
-          <span className="course-card-tag">{card.cta}</span>
-          <span className="course-card-tag">课程</span>
+        <div className="event-card-stats">
+          <span className="event-card-stat" aria-label={`${card.learners || "0"} 人学过`}>
+            <span className="event-card-stat-icon"><LearnersIcon className="event-card-stat-svg" /></span>
+            <span>{card.learners || "0"}</span>
+          </span>
+          <span className="event-card-stat" aria-label={`${card.views || "0"} 次学习`}>
+            <span className="event-card-stat-icon event-card-stat-icon-lg"><ViewsIcon className="event-card-stat-svg" /></span>
+            <span>{card.views || "0"}</span>
+          </span>
         </div>
-        <p className="course-card-summary">{card.summary || "课程内容持续更新中。"}</p>
-        <div className="course-card-facts">
-          <div className="course-card-fact">
-            <span className="course-card-fact-icon"><LearnersIcon className="course-fact-svg" /></span>
-            <span>{card.learners || "0"} 人学过</span>
-          </div>
-          <div className="course-card-fact">
-            <span className="course-card-fact-icon"><ViewsIcon className="course-fact-svg" /></span>
-            <span>{card.views || "0"} 次学习</span>
-          </div>
-        </div>
+        <p>{card.summary || "课程内容持续更新中。"}</p>
+        <span className="event-card-action">{card.cta || "查看课程"}</span>
       </div>
     </article>
   );
@@ -206,29 +202,27 @@ export function CoursesView() {
 
   return (
     <section className="view" id="pageLearning" data-dynamic-courses="true">
-      <div className="page-head">
+      <div className="page-head event-page-head">
         <h2>课程</h2>
         <p>AI 课程与学习资料，覆盖 AI 工具、提示词、自动化工作流和项目交付。</p>
       </div>
-      <div className="course-toolbar">
-        <div className="course-search-actions">
-          <div className="course-search">
-            <input
-              type="search"
-              id="courseSearch"
-              placeholder={content?.searchPlaceholder || "搜索课程"}
-              aria-label="搜索课程"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-          {isAdmin ? (
-            <Link className="course-admin-add" href="/admin/courses#course-editor">
-              <span aria-hidden="true">＋</span>
-              添加课程
-            </Link>
-          ) : null}
+      <div className="course-toolbar event-toolbar">
+        <div className="course-search">
+          <input
+            type="search"
+            id="courseSearch"
+            placeholder={content?.searchPlaceholder || "搜索课程"}
+            aria-label="搜索课程"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
         </div>
+        {isAdmin ? (
+          <Link className="course-admin-add" href="/admin/courses#course-editor">
+            <span aria-hidden="true">＋</span>
+            添加课程
+          </Link>
+        ) : null}
         <div className="course-tools">
           <div className="course-chips" id="courseCategoryFilter" aria-label="课程分类筛选">
             {(content?.categories ?? []).map((item) => (

@@ -44,6 +44,26 @@ type CourseRow = {
   course_contents?: { feishu_doc_url: string } | { feishu_doc_url: string }[];
 };
 
+type CatalogItemRow = {
+  id: number;
+  page: "events" | "cases";
+  title: string;
+  summary: string;
+  category: string;
+  category_class: string;
+  tags: string[] | null;
+  cover: string;
+  learners: number;
+  views: number;
+  cta: string;
+  is_member_only: boolean;
+  is_published: boolean;
+  sort_order: number;
+  href?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
 function fail(error: { message?: string; code?: string } | null, fallback: string): never {
   let detail = error?.message || fallback;
   if (error?.code === "23505") detail = "记录已存在，请勿重复创建";
@@ -137,6 +157,111 @@ function courseAdminOut(row: CourseRow) {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+}
+
+function uniqueTags(input: unknown, fallback: string[] = []) {
+  const raw = Array.isArray(input) ? input : typeof input === "string" ? input.split(",") : fallback;
+  const tags: string[] = [];
+  for (const item of raw) {
+    const tag = String(item ?? "").trim();
+    if (tag && !tags.includes(tag)) tags.push(tag);
+    if (tags.length >= 4) break;
+  }
+  return tags;
+}
+
+function catalogPageFromPath(path: string) {
+  const match = path.match(/^\/api\/(?:admin\/)?catalog\/(events|cases)(?:\/(\d+))?$/);
+  if (!match) return null;
+  return { page: match[1] as "events" | "cases", id: match[2] ? Number(match[2]) : null };
+}
+
+function catalogCardOut(row: CatalogItemRow) {
+  const tags = uniqueTags(row.tags, [
+    row.category,
+    row.page === "events" ? "活动" : "案例",
+    row.is_member_only ? "会员专享" : "公开",
+  ]);
+  return {
+    id: String(row.id),
+    sortOrder: row.sort_order,
+    title: row.title,
+    category: row.category,
+    categoryClass: row.category_class,
+    tags,
+    summary: row.summary,
+    cover: row.cover || null,
+    learners: row.learners.toLocaleString("en-US"),
+    views: row.views.toLocaleString("en-US"),
+    cta: row.cta || (row.page === "events" ? "查看详情" : "查看案例"),
+    locked: row.is_member_only,
+    href: row.href ?? null,
+  };
+}
+
+function catalogAdminOut(row: CatalogItemRow) {
+  return {
+    id: row.id,
+    page: row.page,
+    title: row.title,
+    summary: row.summary,
+    category: row.category,
+    category_class: row.category_class,
+    tags: uniqueTags(row.tags, [
+      row.category,
+      row.page === "events" ? "活动" : "案例",
+      row.is_member_only ? "会员专享" : "公开",
+    ]),
+    cover: row.cover,
+    learners: row.learners,
+    views: row.views,
+    cta: row.cta,
+    is_member_only: row.is_member_only,
+    is_published: row.is_published,
+    sort_order: row.sort_order,
+    href: row.href ?? "",
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+async function loadCatalogPage<T>(page: "events" | "cases", admin = false): Promise<T> {
+  const supabase = getSupabase();
+  let query = supabase
+    .from("catalog_items")
+    .select("*")
+    .eq("page", page)
+    .order("sort_order")
+    .order("id", { ascending: false });
+  if (!admin) query = query.eq("is_published", true);
+  const { data, error } = await query;
+  if (error) fail(error, page === "events" ? "活动加载失败" : "案例加载失败");
+  const rows = (data ?? []) as CatalogItemRow[];
+  if (admin) return rows.map(catalogAdminOut) as T;
+
+  const categoryCounts = new Map<string, { count: number; categoryClass: string }>();
+  for (const row of rows) {
+    const current = categoryCounts.get(row.category);
+    categoryCounts.set(row.category, {
+      count: (current?.count ?? 0) + 1,
+      categoryClass: current?.categoryClass ?? row.category_class,
+    });
+  }
+  return {
+    searchPlaceholder: page === "events" ? "搜索活动" : "搜索案例",
+    defaultSort: "newest",
+    emptyText: page === "events" ? "暂无活动内容。" : "暂无案例内容。",
+    categories: [
+      { value: "", label: "全部", count: rows.length },
+      ...Array.from(categoryCounts.entries()).map(([category, meta]) => ({
+        value: category,
+        label: category,
+        count: meta.count,
+        categoryClass: meta.categoryClass,
+      })),
+    ],
+    cards: rows.map(catalogCardOut),
+  } as T;
 }
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {

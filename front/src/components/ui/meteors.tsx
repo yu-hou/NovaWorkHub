@@ -37,7 +37,8 @@ export const Meteors = ({
         Math.floor(Math.random() * (maxDuration - minDuration) + minDuration) +
         "s",
     }))
-    setMeteorStyles(styles)
+    const frame = window.requestAnimationFrame(() => setMeteorStyles(styles))
+    return () => window.cancelAnimationFrame(frame)
   }, [number, minDelay, maxDelay, minDuration, maxDuration, angle])
 
   return (
@@ -48,12 +49,12 @@ export const Meteors = ({
           key={idx}
           style={{ ...style }}
           className={cn(
-            "animate-meteor pointer-events-none absolute size-0.5 rotate-(--angle) rounded-full bg-zinc-500 shadow-[0_0_0_1px_#ffffff10]",
+            "animate-meteor pointer-events-none absolute size-0.5 rotate-(--angle) rounded-full bg-[#4d4d4d] shadow-[0_0_0_1px_rgba(255,255,255,0.10)]",
             className
           )}
         >
           {/* Meteor Tail */}
-          <div className="pointer-events-none absolute top-1/2 -z-10 h-px w-12.5 -translate-y-1/2 bg-linear-to-r from-zinc-500 to-transparent" />
+          <div className="pointer-events-none absolute top-1/2 -z-10 h-px w-12.5 -translate-y-1/2 bg-linear-to-r from-[#816729] to-transparent" />
         </span>
       ))}
     </>

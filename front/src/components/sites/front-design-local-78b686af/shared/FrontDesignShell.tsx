@@ -7,7 +7,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ContentGateProvider } from "@/components/auth/ContentGate";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 export type FrontDesignPage =
   | "home"
@@ -31,6 +30,7 @@ export default function FrontDesignShell({
   const pathname = usePathname();
   const { user, loading, isAdmin, isMember, logout } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,23 +76,31 @@ export default function FrontDesignShell({
   return (
     <ContentGateProvider>
       <div className="front-design-root" data-front-design-page={page}>
-        <div className="app-shell">
+        <div className={`app-shell${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}>
           <aside className="sidebar">
-            <a className="sidebar-brand" href="/home">
-              <span className="brand-mark">AW</span>
-              <span>
-                <span className="sidebar-brand-title">AgentWork</span>
-                <p>让AI真正干活</p>
-              </span>
-            </a>
+            <div className="sidebar-brand">
+              <Link className="sidebar-brand-link" href="/home">
+                <span className="brand-mark">AW</span>
+                <div className="sidebar-brand-copy">
+                  <span className="sidebar-brand-title">AgentWork</span>
+                  <span className="sidebar-brand-subtitle">让AI真正干活</span>
+                </div>
+              </Link>
+              <button
+                className="sidebar-collapse"
+                type="button"
+                aria-label={sidebarCollapsed ? "展开导航栏" : "收起导航栏"}
+                aria-pressed={sidebarCollapsed}
+                onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+              >
+                <span />
+                <span />
+              </button>
+            </div>
 
             <nav className="side-nav" aria-label="主导航" id="sideNav" />
 
             <div className="sidebar-footer">
-              <div className="front-theme-row">
-                <span>外观模式</span>
-                <ThemeToggle className="front-theme-toggle" />
-              </div>
               <div className="account-menu" ref={accountMenuRef}>
                 <button
                   className="account-trigger"
