@@ -898,9 +898,9 @@ function initPage() {
   } else if (page === 'learning') {
     if (!document.querySelector('[data-dynamic-courses]')) renderCourses();
   } else if (page === 'cases') {
-    renderCases();
+    if (!document.querySelector('[data-dynamic-catalog="cases"]')) renderCases();
   } else if (page === 'events') {
-    renderEvents();
+    if (!document.querySelector('[data-dynamic-catalog="events"]')) renderEvents();
   } else if (page === 'replays') {
     setupLiveReplayEmpty();
   } else if (page === 'benefits') {

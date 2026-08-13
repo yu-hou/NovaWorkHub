@@ -615,6 +615,24 @@ p { text-wrap: pretty; }
 .course-chip:hover { border-color: var(--border-strong); color: var(--ink); }
 .course-chip.active { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
 .course-chip .dim { font-size: 11px; color: inherit; opacity: .62; }
+.course-list-toolbar { flex-wrap: nowrap; }
+.course-list-toolbar .course-tools { position: relative; flex: 1 1 auto; min-width: 0; justify-content: flex-end; flex-wrap: nowrap; }
+.course-list-toolbar .course-chips { min-width: 0; flex-wrap: nowrap; overflow: hidden; }
+.course-category-more { position: relative; flex: 0 0 auto; }
+.course-category-toggle {
+    display: inline-flex; min-height: 32px; align-items: center; justify-content: center; gap: 6px; padding: 0 11px;
+    border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--body); background: var(--canvas);
+    font-size: 12px; font-weight: 650; white-space: nowrap; cursor: pointer;
+    transition: border-color 140ms var(--ease-out), color 140ms var(--ease-out), background 140ms var(--ease-out);
+}
+.course-category-toggle:hover, .course-category-toggle.active { border-color: var(--border-strong); color: var(--ink); background: var(--canvas-soft); }
+.course-category-toggle span { font-size: 13px; transition: transform 140ms var(--ease-out); }
+.course-category-toggle.active span { transform: rotate(180deg); }
+.course-category-overflow {
+    position: absolute; z-index: 50; top: calc(100% + 8px); right: 0; width: max-content; max-width: min(360px, calc(100vw - 32px));
+    display: flex; flex-wrap: wrap; gap: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 13px;
+    background: var(--canvas); box-shadow: var(--shadow-pop);
+}
 
 /* 活动页筛选紧跟搜索框，且上下留白与卡片区保持同一节奏。 */
 .event-page-head { padding-bottom: 0; margin-bottom: 18px; }
@@ -682,7 +700,7 @@ p { text-wrap: pretty; }
 }
 .course-card-action-menu a, .course-card-action-menu button {
     min-height: 36px; width: 100%; padding: 0 10px; display: flex; align-items: center; border: 0; border-radius: 8px;
-    background: transparent; color: var(--ink); font-size: 13px; font-weight: 600; text-align: left; text-decoration: none;
+    justify-content: center; background: transparent; color: var(--ink); font-size: 13px; font-weight: 600; text-align: center; text-decoration: none;
 }
 .course-card-action-menu a:hover, .course-card-action-menu button:hover:not(:disabled) { background: var(--surface-hover); }
 .course-card-action-menu button:disabled { opacity: .38; cursor: not-allowed; }
@@ -1248,6 +1266,8 @@ p { text-wrap: pretty; }
     .course-search { flex: 0 0 auto; max-width: none; }
     .course-admin-add { min-height: 46px; }
     .course-tools { justify-content: space-between; }
+    .course-list-toolbar .course-tools { width: 100%; justify-content: flex-start; }
+    .course-list-toolbar .course-chips { flex: 1 1 auto; }
     .token-rank-view { margin: -14px -14px calc(-88px - env(safe-area-inset-bottom,0px)); padding: 14px 14px calc(88px + env(safe-area-inset-bottom,0px)); }
     .token-rank-page { gap: 14px; }
     .token-rank-hero { grid-template-columns: 1fr; padding: 16px; border-radius: 14px; }

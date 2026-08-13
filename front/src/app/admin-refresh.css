@@ -85,7 +85,15 @@ body.admin-app .admin-brand-mark {
   font-weight: 800;
   letter-spacing: .02em;
 }
+body.admin-app .admin-brand-mark-image {
+  background-color: #111;
+  background-image: url("/seo/favicon.ico");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 26px 26px;
+}
 html.dark body.admin-app .admin-brand-mark { color: #202020; background: #f4eee8; }
+html.dark body.admin-app .admin-brand-mark-image { background-color: #111; background-image: url("/seo/favicon.ico"); }
 body.admin-app .admin-brand-copy { display: grid; gap: 2px; }
 body.admin-app .admin-brand-copy strong { color: var(--admin-ink); font-size: 18px; font-weight: 400; letter-spacing: -.02em; }
 body.admin-app .admin-brand-copy small { color: var(--admin-muted); font-size: 10px; letter-spacing: .04em; }
@@ -325,7 +333,15 @@ body.admin-app .admin-status-card {
   background: var(--admin-canvas);
   box-shadow: var(--admin-shadow);
 }
-body.admin-app .admin-login-brand > div { align-items: center; }
+body.admin-app .admin-login-brand > div,
+body.admin-app .admin-login-brand-link { align-items: center; }
+body.admin-app .admin-login-brand-link { border-radius: 12px; }
+body.admin-app .admin-side-brand-link,
+body.admin-app .admin-login-brand-link { transition: opacity 150ms ease; }
+body.admin-app .admin-side-brand-link:hover,
+body.admin-app .admin-login-brand-link:hover { opacity: .72; }
+body.admin-app .admin-side-brand-link:focus-visible,
+body.admin-app .admin-login-brand-link:focus-visible { outline: 2px solid var(--admin-primary); outline-offset: 4px; }
 body.admin-app .admin-login-brand .admin-brand-name { color: var(--admin-ink); font-size: 18px; font-weight: 750; }
 body.admin-app .admin-login-brand p { color: var(--admin-muted); }
 

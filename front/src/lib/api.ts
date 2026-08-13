@@ -59,7 +59,7 @@ type CatalogItemRow = {
   is_member_only: boolean;
   is_published: boolean;
   sort_order: number;
-  href?: string | null;
+  catalog_contents?: { href: string } | { href: string }[];
   created_at?: string;
   updated_at?: string;
 };
@@ -177,6 +177,7 @@ function catalogPageFromPath(path: string) {
 }
 
 function catalogCardOut(row: CatalogItemRow) {
+  const content = one(row.catalog_contents);
   const tags = uniqueTags(row.tags, [
     row.category,
     row.page === "events" ? "活动" : "案例",
@@ -195,11 +196,12 @@ function catalogCardOut(row: CatalogItemRow) {
     views: row.views.toLocaleString("en-US"),
     cta: row.cta || (row.page === "events" ? "查看详情" : "查看案例"),
     locked: row.is_member_only,
-    href: row.href ?? null,
+    href: content?.href ?? null,
   };
 }
 
 function catalogAdminOut(row: CatalogItemRow) {
+  const content = one(row.catalog_contents);
   return {
     id: row.id,
     page: row.page,
@@ -219,7 +221,7 @@ function catalogAdminOut(row: CatalogItemRow) {
     is_member_only: row.is_member_only,
     is_published: row.is_published,
     sort_order: row.sort_order,
-    href: row.href ?? "",
+    href: content?.href ?? "",
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -237,6 +239,20 @@ async function loadCatalogPage<T>(page: "events" | "cases", admin = false): Prom
   const { data, error } = await query;
   if (error) fail(error, page === "events" ? "活动加载失败" : "案例加载失败");
   const rows = (data ?? []) as CatalogItemRow[];
+  if (rows.length > 0) {
+    const { data: contents, error: contentsError } = await supabase
+      .from("catalog_contents")
+      .select("catalog_item_id,href")
+      .in("catalog_item_id", rows.map((row) => row.id));
+    if (contentsError && admin) fail(contentsError, "内容地址加载失败");
+    const hrefById = new Map(
+      (contents ?? []).map((content) => [content.catalog_item_id, content.href]),
+    );
+    for (const row of rows) {
+      const href = hrefById.get(row.id);
+      row.catalog_contents = href ? { href } : [];
+    }
+  }
   if (admin) return rows.map(catalogAdminOut) as T;
 
   const categoryCounts = new Map<string, { count: number; categoryClass: string }>();
@@ -366,11 +382,21 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
           is_member_only: Boolean(body.is_member_only),
           is_published: body.is_published !== false,
           sort_order: Number(body.sort_order ?? (lastItem?.sort_order ?? 0) + 1),
-          href: String(body.href ?? "").trim() || null,
         })
         .select()
         .single();
       if (error) fail(error, "创建内容失败");
+      const href = String(body.href ?? "").trim();
+      if (href) {
+        const { error: contentError } = await supabase.from("catalog_contents").insert({
+          catalog_item_id: data.id,
+          href,
+        });
+        if (contentError) {
+          await supabase.from("catalog_items").delete().eq("id", data.id);
+          fail(contentError, "保存内容地址失败");
+        }
+      }
       return catalogAdminOut(data as CatalogItemRow) as T;
     }
     if (method === "PATCH" && catalogPath.id !== null) {
@@ -382,7 +408,6 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         "category_class",
         "cover",
         "cta",
-        "href",
         "learners",
         "views",
         "sort_order",
@@ -392,9 +417,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         if (body[key] !== undefined) patch[key] = body[key];
       }
       if (body.tags !== undefined) patch.tags = uniqueTags(body.tags);
-      for (const key of ["title", "summary", "category", "category_class", "cover", "cta", "href"]) {
+      for (const key of ["title", "summary", "category", "category_class", "cover", "cta"]) {
         if (patch[key] !== undefined) {
-          patch[key] = String(patch[key] ?? "").trim() || (key === "href" ? null : "");
+          patch[key] = String(patch[key] ?? "").trim();
         }
       }
       const { error } = await supabase
@@ -403,6 +428,14 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         .eq("page", catalogPath.page)
         .eq("id", catalogPath.id);
       if (error) fail(error, "更新内容失败");
+      if (body.href !== undefined) {
+        const href = String(body.href ?? "").trim();
+        const contentQuery = supabase.from("catalog_contents");
+        const { error: contentError } = href
+          ? await contentQuery.upsert({ catalog_item_id: catalogPath.id, href })
+          : await contentQuery.delete().eq("catalog_item_id", catalogPath.id);
+        if (contentError) fail(contentError, "更新内容地址失败");
+      }
       return { id: catalogPath.id } as T;
     }
     if (method === "DELETE" && catalogPath.id !== null) {
@@ -499,31 +532,30 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
       .limit(1)
       .maybeSingle();
     if (orderError) fail(orderError, "课程顺序读取失败");
-    const { data: course, error } = await supabase
-      .from("courses")
-      .insert({
-        category_id: category.id,
-        title: body.title,
-        summary: body.summary ?? "",
-        cover: body.cover ?? "",
-        learners: body.learners ?? 0,
-        views: body.views ?? 0,
-        is_member_only: body.is_member_only ?? false,
-        is_published: body.is_published ?? true,
-        sort_order: (lastCourse?.sort_order ?? 0) + 1,
-      })
-      .select()
-      .single();
-    if (error) fail(error, "创建课程失败");
-    const { error: contentError } = await supabase.from("course_contents").insert({
-      course_id: course.id,
-      feishu_doc_url: body.feishu_doc_url,
+    const { data: courseId, error } = await supabase.rpc("admin_create_course", {
+      input_category_id: category.id,
+      input_title: String(body.title ?? "").trim(),
+      input_summary: String(body.summary ?? "").trim(),
+      input_cover: String(body.cover ?? "").trim(),
+      input_learners: Number(body.learners ?? 0),
+      input_views: Number(body.views ?? 0),
+      input_member_only: Boolean(body.is_member_only),
+      input_published: body.is_published !== false,
+      input_sort_order: (lastCourse?.sort_order ?? 0) + 1,
+      input_feishu_doc_url: String(body.feishu_doc_url ?? "").trim(),
     });
-    if (contentError) {
-      await supabase.from("courses").delete().eq("id", course.id);
-      fail(contentError, "保存课程内容失败");
-    }
-    return course as T;
+    if (error) fail(error, "创建课程失败");
+    return { id: Number(courseId) } as T;
+  }
+  if (path === "/api/admin/courses/reorder" && method === "POST") {
+    const { error } = await supabase.rpc("admin_swap_course_order", {
+      first_course_id: Number(body.first_course_id),
+      first_sort_order: Number(body.first_sort_order),
+      second_course_id: Number(body.second_course_id),
+      second_sort_order: Number(body.second_sort_order),
+    });
+    if (error) fail(error, "课程顺序更新失败");
+    return { message: "课程顺序已更新" } as T;
   }
   const adminCourseId = path.match(/^\/api\/admin\/courses\/(\d+)$/);
   if (adminCourseId && method === "PATCH") {

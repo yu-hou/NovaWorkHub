@@ -286,18 +286,20 @@ export function AdminCoursesPage() {
     const reordered = [...courses];
     [reordered[currentIndex], reordered[nextIndex]] = [reordered[nextIndex], reordered[currentIndex]];
     const normalized = reordered.map((item, index) => ({ ...item, sort_order: index + 1 }));
+    const adjacent = courses[nextIndex];
     setCourses(normalized);
     setReorderingId(course.id);
     setError("");
     try {
-      await Promise.all(
-        normalized.map((item) =>
-          apiFetch(`/api/admin/courses/${item.id}`, {
-            method: "PATCH",
-            body: { sort_order: item.sort_order },
-          }),
-        ),
-      );
+      await apiFetch("/api/admin/courses/reorder", {
+        method: "POST",
+        body: {
+          first_course_id: course.id,
+          first_sort_order: adjacent.sort_order,
+          second_course_id: adjacent.id,
+          second_sort_order: course.sort_order,
+        },
+      });
       showToast("ok", direction === "up" ? "课程已上移" : "课程已下移");
       await load();
     } catch (err) {

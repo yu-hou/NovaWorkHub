@@ -8,63 +8,21 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type KeyboardEvent,
 } from "react";
-import { ImageUp, ListPlus, PencilLine, Rows3 } from "lucide-react";
 
-import { COLOR_OPTIONS } from "@/components/admin/AdminCategoriesPage";
-import { friendlyError } from "@/components/admin/AdminShell";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useContentGate } from "@/components/auth/ContentGate";
 import { LearnersIcon, ViewsIcon } from "@/components/ui/CourseMetricsIcons";
-import { ApiError, apiFetch, apiUpload, mediaUrl } from "@/lib/api";
+import { ApiError, apiFetch, mediaUrl } from "@/lib/api";
 import {
-  CASES_PAGE,
-  EVENTS_PAGE,
-  LEARNING_PAGE,
-  type CategoryChip,
   type ListPageContent,
   type PlatformCard,
 } from "@/lib/platform-content";
 
 type CourseAction = "up" | "down" | "delete";
-type CatalogKind = "courses" | "events" | "cases";
-type CatalogMode = "cards" | "manage";
-
-type AdminCatalogItem = {
-  id: number;
-  page?: "events" | "cases";
-  title: string;
-  summary: string;
-  category: string;
-  category_class: string;
-  tags: string[];
-  cover: string;
-  learners: number;
-  views: number;
-  cta: string;
-  is_member_only: boolean;
-  is_published: boolean;
-  sort_order: number;
-  href?: string;
-  feishu_doc_url?: string;
-};
-
-const DEFAULT_CATEGORY_CLASS = "category-gold";
-
-function mockCourseContent(): ListPageContent {
-  return {
-    ...LEARNING_PAGE,
-    categories: LEARNING_PAGE.categories.map((item) => ({ ...item })),
-    cards: LEARNING_PAGE.cards.map((card) => ({
-      ...card,
-      href: `/learning/course/?id=${card.id}`,
-      cta: "查看课程",
-      locked: false,
-    })),
-  };
-}
+type CatalogKind = "events" | "cases";
+const COLLAPSED_CATEGORY_LIMIT = 4;
 
 function CourseCard({ card, index, isAdmin, busy, canMoveUp, canMoveDown, onOpen, onAction }: {
   card: PlatformCard;
@@ -166,20 +124,24 @@ export function CoursesView() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
 
   const loadCourses = useCallback(async () => {
     setLoading(true);
     try {
       const nextContent = await apiFetch<ListPageContent>("/api/courses");
-      setContent(nextContent.cards.length > 0 ? nextContent : mockCourseContent());
+      setContent(nextContent);
       setError("");
     } catch (caught: unknown) {
-      setContent(mockCourseContent());
-      setError("");
-      console.warn(
-        "课程后端数据暂不可用，已使用本地模拟数据。",
-        caught instanceof ApiError ? caught.detail : caught,
+      setContent(null);
+      setError(
+        caught instanceof ApiError
+          ? caught.detail
+          : caught instanceof Error
+            ? caught.message
+            : "课程加载失败",
       );
     } finally {
       setLoading(false);
@@ -190,6 +152,35 @@ export function CoursesView() {
     if (authLoading) return;
     void loadCourses();
   }, [authLoading, isLoggedIn, isMember, loadCourses]);
+
+  useEffect(() => {
+    if (!categoryMenuOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!categoryMenuRef.current?.contains(event.target as Node)) {
+        setCategoryMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [categoryMenuOpen]);
+
+  const categoryItems = useMemo(
+    () => content?.categories ?? [],
+    [content?.categories],
+  );
+  const collapsedCategories = useMemo(() => {
+    const firstItems = categoryItems.slice(0, COLLAPSED_CATEGORY_LIMIT);
+    if (!category || firstItems.some((item) => item.value === category)) {
+      return firstItems;
+    }
+    const selected = categoryItems.find((item) => item.value === category);
+    return selected
+      ? [...firstItems.slice(0, COLLAPSED_CATEGORY_LIMIT - 1), selected]
+      : firstItems;
+  }, [category, categoryItems]);
+  const hiddenCategories = categoryItems.filter(
+    (item) => !collapsedCategories.some((visible) => visible.value === item.value),
+  );
 
   const visibleCards = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase("zh-CN");
@@ -228,10 +219,15 @@ export function CoursesView() {
         const nextIndex = action === "up" ? currentIndex - 1 : currentIndex + 1;
         const adjacent = cards[nextIndex];
         if (currentIndex < 0 || !adjacent?.id) return;
-        await Promise.all([
-          apiFetch(`/api/admin/courses/${card.id}`, { method: "PATCH", body: { sort_order: adjacent.sortOrder ?? nextIndex + 1 } }),
-          apiFetch(`/api/admin/courses/${adjacent.id}`, { method: "PATCH", body: { sort_order: card.sortOrder ?? currentIndex + 1 } }),
-        ]);
+        await apiFetch("/api/admin/courses/reorder", {
+          method: "POST",
+          body: {
+            first_course_id: Number(card.id),
+            first_sort_order: adjacent.sortOrder ?? nextIndex + 1,
+            second_course_id: Number(adjacent.id),
+            second_sort_order: card.sortOrder ?? currentIndex + 1,
+          },
+        });
       }
       await loadCourses();
     } catch (caught: unknown) {
@@ -247,7 +243,7 @@ export function CoursesView() {
         <h2>课程</h2>
         <p>AI 课程与学习资料，覆盖 AI 工具、提示词、自动化工作流和项目交付。</p>
       </div>
-      <div className="course-toolbar event-toolbar">
+      <div className="course-toolbar event-toolbar course-list-toolbar">
         <div className="course-search">
           <input
             type="search"
@@ -266,7 +262,7 @@ export function CoursesView() {
         ) : null}
         <div className="course-tools">
           <div className="course-chips" id="courseCategoryFilter" aria-label="课程分类筛选">
-            {(content?.categories ?? []).map((item) => (
+            {collapsedCategories.map((item) => (
               <button
                 type="button"
                 className={`course-chip${category === item.value ? " active" : ""}`}
@@ -277,6 +273,41 @@ export function CoursesView() {
               </button>
             ))}
           </div>
+          {categoryItems.length > COLLAPSED_CATEGORY_LIMIT ? (
+            <div className="course-category-more" ref={categoryMenuRef}>
+              <button
+                type="button"
+                className={`course-category-toggle${categoryMenuOpen ? " active" : ""}`}
+                aria-expanded={categoryMenuOpen}
+                aria-controls="courseCategoryOverflow"
+                onClick={() => setCategoryMenuOpen((open) => !open)}
+              >
+                {categoryMenuOpen ? "收起" : `更多 +${hiddenCategories.length}`}
+                <span aria-hidden="true">⌄</span>
+              </button>
+              {categoryMenuOpen ? (
+                <div
+                  className="course-category-overflow"
+                  id="courseCategoryOverflow"
+                  aria-label="更多课程分类"
+                >
+                  {hiddenCategories.map((item) => (
+                    <button
+                      type="button"
+                      className={`course-chip${category === item.value ? " active" : ""}`}
+                      key={item.value || "all-overflow"}
+                      onClick={() => {
+                        setCategory(item.value);
+                        setCategoryMenuOpen(false);
+                      }}
+                    >
+                      {item.label}<span className="dim">{item.count}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="course-grid" id="courseGrid">
@@ -303,84 +334,213 @@ export function CoursesView() {
   );
 }
 
-export function EventsView() {
+function CatalogCard({
+  card,
+  index,
+  kind,
+  onOpen,
+}: {
+  card: PlatformCard;
+  index: number;
+  kind: CatalogKind;
+  onOpen: (card: PlatformCard) => void;
+}) {
+  const label = kind === "events" ? "活动" : "案例";
+  const openFromKeyboard = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onOpen(card);
+  };
+
   return (
-    <section className="view" id="pageEvents">
-      <div className="page-head event-page-head">
-        <h2>活动</h2>
-        <p>社群活动、直播与回放，按最新整理，和课程页保持同一套阅读节奏。</p>
+    <article
+      className={`${kind === "cases" ? "case-card" : "event-card"} rise-in`}
+      style={{ animationDelay: `${index * 40}ms` }}
+      tabIndex={0}
+      role="button"
+      aria-label={`${card.cta || `查看${label}`}：${card.title}`}
+      onClick={() => onOpen(card)}
+      onKeyDown={openFromKeyboard}
+    >
+      <div className={kind === "cases" ? "case-card-cover" : "event-card-cover"}>
+        {card.cover ? (
+          <Image
+            src={mediaUrl(card.cover)}
+            alt={`${card.title} ${label}封面`}
+            fill
+            sizes="(max-width: 760px) calc(100vw - 28px), (max-width: 980px) calc((100vw - 302px) / 2), 30vw"
+          />
+        ) : (
+          <div className="course-card-cover-fallback">AW</div>
+        )}
+        <div className={kind === "cases" ? "case-card-tags" : "event-card-tags"}>
+          {(card.tags?.length ? card.tags : [card.category, label, card.locked ? "会员专享" : "公开"])
+            .filter(Boolean)
+            .slice(0, 4)
+            .map((tag) => (
+              <span
+                className={kind === "cases" ? "case-card-tag" : "event-card-tag"}
+                key={String(tag)}
+              >
+                {tag}
+              </span>
+            ))}
+        </div>
       </div>
-      <div className="course-toolbar event-toolbar">
+      <div className={kind === "cases" ? "case-card-content" : "event-card-body"}>
+        <h4 className={kind === "cases" ? "case-card-title" : undefined}>{card.title}</h4>
+        <div className={kind === "cases" ? "case-card-stats" : "event-card-stats"}>
+          <span className={kind === "cases" ? "case-card-stat" : "event-card-stat"}>
+            <span className={kind === "cases" ? "case-card-stat-icon" : "event-card-stat-icon"}>
+              <LearnersIcon className={kind === "cases" ? "case-card-stat-svg" : "event-card-stat-svg"} />
+            </span>
+            <span>{card.learners || "0"}</span>
+          </span>
+          <span className={kind === "cases" ? "case-card-stat" : "event-card-stat"}>
+            <span className={`${kind === "cases" ? "case-card-stat-icon case-card-stat-icon-lg" : "event-card-stat-icon event-card-stat-icon-lg"}`}>
+              <ViewsIcon className={kind === "cases" ? "case-card-stat-svg" : "event-card-stat-svg"} />
+            </span>
+            <span>{card.views || "0"}</span>
+          </span>
+        </div>
+        <p className={kind === "cases" ? "case-card-desc" : undefined}>{card.summary}</p>
+        <span className={kind === "cases" ? "case-card-action" : "event-card-action"}>
+          {card.href ? card.cta || `查看${label}` : "内容待配置"}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function CatalogView({ kind }: { kind: CatalogKind }) {
+  const isEvents = kind === "events";
+  const label = isEvents ? "活动" : "案例";
+  const { loading: authLoading, isLoggedIn, isMember } = useAuth();
+  const { openLogin, openMemberGate } = useContentGate();
+  const [content, setContent] = useState<ListPageContent | null>(null);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("");
+  const [sort, setSort] = useState<"latest" | "order">("latest");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await apiFetch<ListPageContent>(`/api/catalog/${kind}`);
+      setContent(data);
+      setError("");
+    } catch (caught: unknown) {
+      setContent(null);
+      setError(caught instanceof ApiError ? caught.detail : caught instanceof Error ? caught.message : `${label}加载失败`);
+    } finally {
+      setLoading(false);
+    }
+  }, [kind, label]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    void load();
+  }, [authLoading, load]);
+
+  const visibleCards = useMemo(() => {
+    const keyword = query.trim().toLocaleLowerCase("zh-CN");
+    const cards = (content?.cards ?? []).filter((card) => {
+      if (category && card.category !== category) return false;
+      if (!keyword) return true;
+      return `${card.title} ${card.summary ?? ""} ${card.category ?? ""} ${(card.tags ?? []).join(" ")}`
+        .toLocaleLowerCase("zh-CN")
+        .includes(keyword);
+    });
+    return cards.slice().sort((a, b) => {
+      if (sort === "order") return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      return Number(b.id ?? 0) - Number(a.id ?? 0);
+    });
+  }, [category, content, query, sort]);
+
+  const openCard = (card: PlatformCard) => {
+    setNotice("");
+    if (card.locked && !isLoggedIn) {
+      openLogin(`登录后查看${label}`);
+      return;
+    }
+    if (card.locked && !isMember) {
+      openMemberGate();
+      return;
+    }
+    if (!card.href) {
+      setNotice(`“${card.title}”尚未配置内容地址，请联系管理员补充。`);
+      return;
+    }
+    window.open(card.href, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <section
+      className="view"
+      id={isEvents ? "pageEvents" : "pageCases"}
+      data-dynamic-catalog={kind}
+    >
+      <div className="page-head event-page-head">
+        <h2>{label}</h2>
+        <p>{isEvents ? "社群活动、直播与回放，按最新整理，和课程页保持同一套阅读节奏。" : "真实成员案例，按最新整理，和活动页保持同一套卡片规范。"}</p>
+      </div>
+      <div className={`course-toolbar ${isEvents ? "event-toolbar" : "case-toolbar"}`}>
         <div className="course-search">
           <input
             type="search"
-            id="eventSearch"
-            placeholder="搜索活动"
-            aria-label="搜索活动"
+            placeholder={content?.searchPlaceholder || `搜索${label}`}
+            aria-label={`搜索${label}`}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
           />
         </div>
         <div className="course-tools">
-          <div
-            className="course-chips"
-            id="eventCategoryFilter"
-            aria-label="活动分类筛选"
-          />
+          <div className="course-chips" aria-label={`${label}分类筛选`}>
+            {(content?.categories ?? []).map((item) => (
+              <button
+                type="button"
+                className={`course-chip${category === item.value ? " active" : ""}`}
+                key={item.value || "all"}
+                onClick={() => setCategory(item.value)}
+              >
+                {item.label}<span className="dim">{item.count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="case-sort" aria-label={`${label}排序`}>
+            <button type="button" className={`case-sort-button${sort === "latest" ? " active" : ""}`} onClick={() => setSort("latest")}>最新</button>
+            <button type="button" className={`case-sort-button${sort === "order" ? " active" : ""}`} onClick={() => setSort("order")}>顺序</button>
+          </div>
         </div>
       </div>
-      <div className="course-grid" id="eventsGrid" />
-      <div className="course-empty hidden" id="eventsEmpty">
-        没有找到匹配的活动。
+      {notice ? <div className="course-empty" role="status">{notice}</div> : null}
+      <div className="course-grid" id={isEvents ? "eventsGrid" : "casesGrid"}>
+        {visibleCards.map((card, index) => (
+          <CatalogCard card={card} index={index} kind={kind} key={card.id || `${card.title}-${index}`} onOpen={openCard} />
+        ))}
       </div>
+      {loading ? <div className="course-empty">正在加载{label}…</div> : null}
+      {!loading && error ? (
+        <div className="course-empty" role="alert">
+          <p>{error}</p>
+          <button type="button" onClick={() => void load()}>重新加载</button>
+        </div>
+      ) : null}
+      {!loading && !error && visibleCards.length === 0 ? (
+        <div className="course-empty">{content?.emptyText || `没有找到匹配的${label}。`}</div>
+      ) : null}
     </section>
   );
 }
 
+export function EventsView() {
+  return <CatalogView kind="events" />;
+}
+
 export function CasesView() {
-  return (
-    <section className="view" id="pageCases">
-      <div className="page-head event-page-head">
-        <h2>案例</h2>
-        <p>真实成员案例，按最新整理，和活动页保持同一套卡片规范。</p>
-      </div>
-      <div className="course-toolbar case-toolbar">
-        <div className="course-search">
-          <input
-            type="search"
-            id="caseSearch"
-            placeholder="搜索案例"
-            aria-label="搜索案例"
-          />
-        </div>
-        <div className="course-tools">
-          <div
-            className="course-chips"
-            id="caseCategoryFilter"
-            aria-label="案例分类筛选"
-          />
-          <div className="case-sort" aria-label="案例排序">
-            <button
-              type="button"
-              className="case-sort-button active"
-              data-case-sort="latest"
-            >
-              最新
-            </button>
-            <button
-              type="button"
-              className="case-sort-button"
-              data-case-sort="order"
-            >
-              顺序
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className="course-grid" id="casesGrid" />
-      <div className="course-empty hidden" id="casesEmpty">
-        没有找到匹配的案例。
-      </div>
-    </section>
-  );
+  return <CatalogView kind="cases" />;
 }
 
 export function BenefitsView() {

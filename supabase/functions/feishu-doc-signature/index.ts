@@ -11,11 +11,24 @@ type FeishuTicketCache = {
   expireAt: number;
 };
 
-let tokenCache: FeishuTokenCache | null = null;
+let appTokenCache: FeishuTokenCache | null = null;
+let tenantTokenCache: FeishuTokenCache | null = null;
 let ticketCache: FeishuTicketCache | null = null;
 
-function jsonError(detail: string, status: number) {
-  return Response.json({ detail }, { status });
+function jsonError(
+  detail: string,
+  status: number,
+  requestId?: string,
+  stage?: string,
+) {
+  return Response.json(
+    {
+      detail,
+      ...(requestId ? { request_id: requestId } : {}),
+      ...(stage ? { stage } : {}),
+    },
+    { status },
+  );
 }
 
 function randomNonce(length = 16) {
@@ -86,8 +99,8 @@ function objTypeToPath(objType: string) {
 
 async function getAppAccessToken(appId: string, appSecret: string) {
   const now = Date.now();
-  if (tokenCache && tokenCache.expireAt > now + 60_000) {
-    return tokenCache.token;
+  if (appTokenCache && appTokenCache.expireAt > now + 60_000) {
+    return appTokenCache.token;
   }
 
   const res = await fetch(
@@ -108,11 +121,42 @@ async function getAppAccessToken(appId: string, appSecret: string) {
     throw new Error(payload.msg || "获取飞书 app_access_token 失败");
   }
 
-  tokenCache = {
+  appTokenCache = {
     token: payload.app_access_token,
     expireAt: now + (payload.expire ?? 7200) * 1000,
   };
-  return tokenCache.token;
+  return appTokenCache.token;
+}
+
+async function getTenantAccessToken(appId: string, appSecret: string) {
+  const now = Date.now();
+  if (tenantTokenCache && tenantTokenCache.expireAt > now + 60_000) {
+    return tenantTokenCache.token;
+  }
+
+  const res = await fetch(
+    "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+    },
+  );
+  const payload = (await res.json()) as {
+    code?: number;
+    msg?: string;
+    tenant_access_token?: string;
+    expire?: number;
+  };
+  if (!res.ok || payload.code !== 0 || !payload.tenant_access_token) {
+    throw new Error(payload.msg || "获取飞书 tenant_access_token 失败");
+  }
+
+  tenantTokenCache = {
+    token: payload.tenant_access_token,
+    expireAt: now + (payload.expire ?? 7200) * 1000,
+  };
+  return tenantTokenCache.token;
 }
 
 async function getJsapiTicket(appAccessToken: string) {
@@ -145,17 +189,28 @@ async function getJsapiTicket(appAccessToken: string) {
 }
 
 /** 将 wiki 链接解析为云文档组件可打开的 docx/docs 等地址 */
-async function resolveEmbedSrc(docUrl: string, appAccessToken: string) {
+async function resolveEmbedSrc(docUrl: string, tenantAccessToken: string) {
   let parsed: URL;
   try {
     parsed = new URL(docUrl);
   } catch {
     throw new Error("飞书文档链接无效");
   }
+  const isFeishuHost =
+    parsed.hostname === "feishu.cn" ||
+    parsed.hostname.endsWith(".feishu.cn") ||
+    parsed.hostname === "larksuite.com" ||
+    parsed.hostname.endsWith(".larksuite.com");
+  if (parsed.protocol !== "https:" || !isFeishuHost) {
+    throw new Error("课程文档必须使用飞书或 Lark 的 HTTPS 链接");
+  }
 
   const wikiMatch = parsed.pathname.match(/\/wiki\/([^/?#]+)/);
   if (!wikiMatch) {
-    // 已是 docx/docs/sheets 等，直接去掉查询参数后返回
+    if (!/^\/(?:docx|docs|sheets|base|mindnotes|slides)\/[^/?#]+\/?$/.test(parsed.pathname)) {
+      throw new Error("暂不支持该飞书文档链接类型，请使用 wiki、docx、docs、sheets 或 base 链接");
+    }
+    // 已是 docx/docs/sheets 等，直接去掉查询参数后返回。
     return `${parsed.origin}${parsed.pathname}`;
   }
 
@@ -164,7 +219,7 @@ async function resolveEmbedSrc(docUrl: string, appAccessToken: string) {
     `https://open.feishu.cn/open-apis/wiki/v2/spaces/get_node?token=${encodeURIComponent(wikiToken)}`,
     {
       headers: {
-        Authorization: `Bearer ${appAccessToken}`,
+        Authorization: `Bearer ${tenantAccessToken}`,
       },
     },
   );
@@ -202,8 +257,9 @@ async function resolveEmbedSrc(docUrl: string, appAccessToken: string) {
 
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
+    const requestId = crypto.randomUUID();
     if (!ctx.userClaims?.id) {
-      return jsonError("请先登录后再查看课程文档", 401);
+      return jsonError("请先登录后再查看课程文档", 401, requestId, "authorize_user");
     }
 
     const appId = Deno.env.get("FEISHU_APP_ID")?.trim() ?? "";
@@ -212,6 +268,8 @@ export default {
       return jsonError(
         "未配置飞书开放平台凭证（FEISHU_APP_ID / FEISHU_APP_SECRET）",
         503,
+        requestId,
+        "load_credentials",
       );
     }
 
@@ -220,12 +278,12 @@ export default {
       course_id?: number;
     };
     if (!body.page_url?.trim()) {
-      return jsonError("缺少 page_url", 400);
+      return jsonError("缺少 page_url", 400, requestId, "validate_request");
     }
 
     const courseId = Number(body.course_id);
     if (!Number.isInteger(courseId) || courseId <= 0) {
-      return jsonError("无效课程", 400);
+      return jsonError("无效课程", 400, requestId, "validate_request");
     }
 
     let pageUrl = "";
@@ -238,6 +296,8 @@ export default {
       return jsonError(
         error instanceof Error ? error.message : "无效的页面地址",
         400,
+        requestId,
+        "validate_page_url",
       );
     }
 
@@ -247,19 +307,28 @@ export default {
       .eq("course_id", courseId)
       .maybeSingle();
     if (contentError) {
-      return jsonError(contentError.message, 400);
+      return jsonError(contentError.message, 400, requestId, "load_course_content");
     }
     if (!content?.feishu_doc_url?.trim()) {
-      return jsonError("无权访问该课程文档", 403);
+      return jsonError("无权访问该课程文档", 403, requestId, "authorize_course");
     }
 
+    let stage = "get_app_access_token";
     try {
       const appAccessToken = await getAppAccessToken(appId, appSecret);
+      const docUrl = content.feishu_doc_url.trim();
+      let documentAccessToken = appAccessToken;
+      if (/\/wiki\/[^/?#]+/.test(docUrl)) {
+        stage = "get_tenant_access_token";
+        documentAccessToken = await getTenantAccessToken(appId, appSecret);
+      }
+      stage = "resolve_document_url";
       const embedSrc = await resolveEmbedSrc(
-        content.feishu_doc_url.trim(),
-        appAccessToken,
+        docUrl,
+        documentAccessToken,
       );
 
+      stage = "get_jsapi_ticket";
       const ticket = await getJsapiTicket(appAccessToken);
       const nonceStr = randomNonce(16);
       const timestamp = Date.now();
@@ -276,11 +345,20 @@ export default {
         jsApiList: ["DocsComponent"],
         locale: "zh-CN",
         embed_src: embedSrc,
+        request_id: requestId,
       });
     } catch (error) {
+      console.error("feishu_doc_signature_failed", {
+        requestId,
+        courseId,
+        stage,
+        message: error instanceof Error ? error.message : String(error),
+      });
       return jsonError(
         error instanceof Error ? error.message : "飞书签名生成失败",
         502,
+        requestId,
+        stage,
       );
     }
   }),

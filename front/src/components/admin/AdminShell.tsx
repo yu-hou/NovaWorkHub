@@ -46,6 +46,12 @@ const ADMIN_NAV = [
     icon: "courses",
     match: (p: string) => p.startsWith("/admin/courses"),
   },
+  {
+    href: "/admin/content",
+    label: "内容管理",
+    icon: "content",
+    match: (p: string) => p.startsWith("/admin/content"),
+  },
 ] as const;
 
 function AdminNavIcon({ name }: { name: (typeof ADMIN_NAV)[number]["icon"] }) {
@@ -57,6 +63,9 @@ function AdminNavIcon({ name }: { name: (typeof ADMIN_NAV)[number]["icon"] }) {
   }
   if (name === "courses") {
     return <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H21v16H6.5A2.5 2.5 0 0 0 4 21.5zM4 5.5v16M8 7h9M8 11h7" /></svg>;
+  }
+  if (name === "content") {
+    return <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M8 9h8M8 13h8M8 17h5" /></svg>;
   }
   return <svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z" /></svg>;
 }
@@ -92,11 +101,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <div className="admin-login-wrap">
           <div className="admin-login-panel">
             <div className="admin-login-brand">
-              <div>
-                <span className="admin-brand-mark">AW</span>
-                <span className="admin-brand-name">AgentWork</span>
+              <Link
+                href="/home"
+                className="admin-login-brand-link"
+                aria-label="返回 NovaWorkHub 前台"
+              >
+                <span className="admin-brand-mark admin-brand-mark-image" aria-hidden="true" />
+                <span className="admin-brand-name">NovaWorkHub</span>
                 <p>管理后台</p>
-              </div>
+              </Link>
               <ThemeToggle className="sidebar-theme-toggle" />
             </div>
             <h1>管理员登录</h1>
@@ -135,10 +148,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <div className="admin-shell">
         <aside className="admin-sidebar" aria-label="管理导航">
           <div className="admin-side-brand">
-            <Link href="/admin" className="admin-side-brand-link">
-              <span className="admin-brand-mark">AW</span>
+            <Link href="/home" className="admin-side-brand-link" aria-label="返回 NovaWorkHub 前台">
+              <span className="admin-brand-mark admin-brand-mark-image" aria-hidden="true" />
               <span className="admin-brand-copy">
-                <strong>AgentWork</strong>
+                <strong>NovaWorkHub</strong>
                 <small>管理后台</small>
               </span>
             </Link>
