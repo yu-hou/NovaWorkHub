@@ -8,7 +8,7 @@ import { ApiError, apiFetch } from "@/lib/api";
 const FEISHU_SDK_SRC =
   "https://sf1-scmcdn-cn.feishucdn.com/obj/feishu-static/docComponentSdk/lib/1.0.13.js";
 
-type FeishuSignature = {
+export type FeishuSignature = {
   appId: string;
   signature: string;
   nonceStr: string;
@@ -54,6 +54,7 @@ type FeishuDocsViewerProps = {
   src: string;
   title: string;
   fullScreen?: boolean;
+  initialAuth?: FeishuSignature;
 };
 
 function FeishuFallbackCard({
@@ -147,7 +148,15 @@ function loadFeishuSdk() {
     document.head.appendChild(script);
   });
 
+  sdkLoader = sdkLoader.catch((error) => {
+    sdkLoader = null;
+    throw error;
+  });
   return sdkLoader;
+}
+
+export function preloadFeishuDocsSdk() {
+  return loadFeishuSdk();
 }
 
 function signaturePageUrl() {
@@ -177,6 +186,7 @@ export function FeishuDocsViewer({
   src,
   title,
   fullScreen = false,
+  initialAuth,
 }: FeishuDocsViewerProps) {
   const { theme } = useTheme();
   const mountRef = useRef<HTMLDivElement>(null);
@@ -212,16 +222,22 @@ export function FeishuDocsViewer({
       }
 
       try {
-        const auth = await apiFetch<FeishuSignature>(
-          "/api/feishu/doc-signature",
-          {
-            method: "POST",
-            body: {
-              page_url: signaturePageUrl(),
-              course_id: courseId,
+        const authRequest = initialAuth
+          ? Promise.resolve(initialAuth)
+          : apiFetch<FeishuSignature>(
+            "/api/feishu/doc-signature",
+            {
+              method: "POST",
+              body: {
+                page_url: signaturePageUrl(),
+                course_id: courseId,
+              },
             },
-          },
-        );
+          );
+        const [auth, DocSdk] = await Promise.all([
+          authRequest,
+          loadFeishuSdk(),
+        ]);
         if (cancelled) return;
 
         const embedSrc = (auth.embed_src || src).trim();
@@ -229,9 +245,6 @@ export function FeishuDocsViewer({
           failToFallback("未能解析可嵌入的飞书文档地址。");
           return;
         }
-
-        const DocSdk = await loadFeishuSdk();
-        if (cancelled) return;
 
         const mountNode = mountRef.current;
         if (!mountNode) {
@@ -321,7 +334,7 @@ export function FeishuDocsViewer({
       }
       componentRef.current = null;
     };
-  }, [courseId, fullScreen, src, theme]);
+  }, [courseId, fullScreen, initialAuth, src, theme]);
 
   if (status === "fallback") {
     return (

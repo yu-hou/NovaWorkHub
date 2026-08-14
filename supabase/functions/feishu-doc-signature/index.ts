@@ -11,6 +11,11 @@ type FeishuTicketCache = {
   expireAt: number;
 };
 
+type PersistentCache = {
+  read: (key: string) => Promise<FeishuTokenCache | null>;
+  write: (key: string, value: FeishuTokenCache) => Promise<void>;
+};
+
 let appTokenCache: FeishuTokenCache | null = null;
 let tenantTokenCache: FeishuTokenCache | null = null;
 let ticketCache: FeishuTicketCache | null = null;
@@ -97,10 +102,19 @@ function objTypeToPath(objType: string) {
   }
 }
 
-async function getAppAccessToken(appId: string, appSecret: string) {
+async function getAppAccessToken(
+  appId: string,
+  appSecret: string,
+  cache: PersistentCache,
+) {
   const now = Date.now();
   if (appTokenCache && appTokenCache.expireAt > now + 60_000) {
     return appTokenCache.token;
+  }
+  const persisted = await cache.read("app_access_token");
+  if (persisted && persisted.expireAt > now + 60_000) {
+    appTokenCache = persisted;
+    return persisted.token;
   }
 
   const res = await fetch(
@@ -125,13 +139,23 @@ async function getAppAccessToken(appId: string, appSecret: string) {
     token: payload.app_access_token,
     expireAt: now + (payload.expire ?? 7200) * 1000,
   };
+  await cache.write("app_access_token", appTokenCache);
   return appTokenCache.token;
 }
 
-async function getTenantAccessToken(appId: string, appSecret: string) {
+async function getTenantAccessToken(
+  appId: string,
+  appSecret: string,
+  cache: PersistentCache,
+) {
   const now = Date.now();
   if (tenantTokenCache && tenantTokenCache.expireAt > now + 60_000) {
     return tenantTokenCache.token;
+  }
+  const persisted = await cache.read("tenant_access_token");
+  if (persisted && persisted.expireAt > now + 60_000) {
+    tenantTokenCache = persisted;
+    return persisted.token;
   }
 
   const res = await fetch(
@@ -156,13 +180,22 @@ async function getTenantAccessToken(appId: string, appSecret: string) {
     token: payload.tenant_access_token,
     expireAt: now + (payload.expire ?? 7200) * 1000,
   };
+  await cache.write("tenant_access_token", tenantTokenCache);
   return tenantTokenCache.token;
 }
 
-async function getJsapiTicket(appAccessToken: string) {
+async function getJsapiTicket(
+  appAccessToken: string,
+  cache: PersistentCache,
+) {
   const now = Date.now();
   if (ticketCache && ticketCache.expireAt > now + 60_000) {
     return ticketCache.ticket;
+  }
+  const persisted = await cache.read("jsapi_ticket");
+  if (persisted && persisted.expireAt > now + 60_000) {
+    ticketCache = { ticket: persisted.token, expireAt: persisted.expireAt };
+    return persisted.token;
   }
 
   const res = await fetch("https://open.feishu.cn/open-apis/jssdk/ticket/get", {
@@ -185,6 +218,10 @@ async function getJsapiTicket(appAccessToken: string) {
     ticket: payload.data.ticket,
     expireAt: now + (payload.data.expire_in ?? 7200) * 1000,
   };
+  await cache.write("jsapi_ticket", {
+    token: ticketCache.ticket,
+    expireAt: ticketCache.expireAt,
+  });
   return ticketCache.ticket;
 }
 
@@ -257,6 +294,7 @@ async function resolveEmbedSrc(docUrl: string, tenantAccessToken: string) {
 
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
+    const requestStartedAt = performance.now();
     const requestId = crypto.randomUUID();
     if (!ctx.userClaims?.id) {
       return jsonError("请先登录后再查看课程文档", 401, requestId, "authorize_user");
@@ -301,11 +339,32 @@ export default {
       );
     }
 
-    const { data: content, error: contentError } = await ctx.supabase
-      .from("course_contents")
-      .select("feishu_doc_url")
-      .eq("course_id", courseId)
-      .maybeSingle();
+    const databaseStartedAt = performance.now();
+    const [courseResult, contentResult] = await Promise.all([
+      ctx.supabase
+        .from("courses")
+        .select(
+          "id,title,summary,cover,learners,views,is_member_only,is_published,categories!inner(name,color_class)",
+        )
+        .eq("id", courseId)
+        .maybeSingle(),
+      ctx.supabase
+        .from("course_contents")
+        .select(
+          "feishu_doc_url,embed_src,embed_src_source_url,embed_src_updated_at",
+        )
+        .eq("course_id", courseId)
+        .maybeSingle(),
+    ]);
+    const databaseMs = performance.now() - databaseStartedAt;
+    const { data: course, error: courseError } = courseResult;
+    const { data: content, error: contentError } = contentResult;
+    if (courseError) {
+      return jsonError(courseError.message, 400, requestId, "load_course");
+    }
+    if (!course) {
+      return jsonError("课程不存在", 404, requestId, "load_course");
+    }
     if (contentError) {
       return jsonError(contentError.message, 400, requestId, "load_course_content");
     }
@@ -313,40 +372,146 @@ export default {
       return jsonError("无权访问该课程文档", 403, requestId, "authorize_course");
     }
 
-    let stage = "get_app_access_token";
-    try {
-      const appAccessToken = await getAppAccessToken(appId, appSecret);
-      const docUrl = content.feishu_doc_url.trim();
-      let documentAccessToken = appAccessToken;
-      if (/\/wiki\/[^/?#]+/.test(docUrl)) {
-        stage = "get_tenant_access_token";
-        documentAccessToken = await getTenantAccessToken(appId, appSecret);
-      }
-      stage = "resolve_document_url";
-      const embedSrc = await resolveEmbedSrc(
-        docUrl,
-        documentAccessToken,
-      );
+    const persistentCache: PersistentCache = {
+      read: async (key) => {
+        const { data, error } = await ctx.supabaseAdmin
+          .from("feishu_runtime_cache")
+          .select("cache_value,expires_at")
+          .eq("cache_key", key)
+          .maybeSingle();
+        if (error || !data?.cache_value || !data.expires_at) return null;
+        return {
+          token: data.cache_value,
+          expireAt: new Date(data.expires_at).getTime(),
+        };
+      },
+      write: async (key, value) => {
+        const { error } = await ctx.supabaseAdmin
+          .from("feishu_runtime_cache")
+          .upsert({
+            cache_key: key,
+            cache_value: value.token,
+            expires_at: new Date(value.expireAt).toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        if (error) {
+          console.warn("feishu_runtime_cache_write_failed", {
+            requestId,
+            key,
+            message: error.message,
+          });
+        }
+      },
+    };
 
-      stage = "get_jsapi_ticket";
-      const ticket = await getJsapiTicket(appAccessToken);
+    const nextViewsPromise = ctx.supabaseAdmin.rpc(
+      "increment_course_views_internal",
+      { target_course_id: courseId },
+    );
+
+    let stage = "prepare_feishu_auth";
+    try {
+      const docUrl = content.feishu_doc_url.trim();
+      const isWikiDocument = /\/wiki\/[^/?#]+/.test(docUrl);
+      const feishuStartedAt = performance.now();
+      const appAccessTokenPromise = getAppAccessToken(
+        appId,
+        appSecret,
+        persistentCache,
+      );
+      const tenantAccessTokenPromise = isWikiDocument
+        ? getTenantAccessToken(appId, appSecret, persistentCache)
+        : null;
+      const appAccessToken = await appAccessTokenPromise;
+      const documentAccessToken = tenantAccessTokenPromise
+        ? await tenantAccessTokenPromise
+        : appAccessToken;
+
+      stage = "prepare_document";
+      const hasCurrentEmbedCache = Boolean(
+        content.embed_src?.trim() && content.embed_src_source_url === docUrl,
+      );
+      const embedSrcPromise = hasCurrentEmbedCache
+        ? Promise.resolve(content.embed_src.trim())
+        : resolveEmbedSrc(docUrl, documentAccessToken).then(async (embedSrc) => {
+          const { error } = await ctx.supabaseAdmin
+            .from("course_contents")
+            .update({
+              embed_src: embedSrc,
+              embed_src_source_url: docUrl,
+              embed_src_updated_at: new Date().toISOString(),
+            })
+            .eq("course_id", courseId);
+          if (error) {
+            console.warn("feishu_embed_cache_write_failed", {
+              requestId,
+              courseId,
+              message: error.message,
+            });
+          }
+          return embedSrc;
+        });
+      const ticketPromise = getJsapiTicket(appAccessToken, persistentCache);
+      const [embedSrc, ticket, nextViewsResult] = await Promise.all([
+        embedSrcPromise,
+        ticketPromise,
+        nextViewsPromise,
+      ]);
+      const feishuMs = performance.now() - feishuStartedAt;
       const nonceStr = randomNonce(16);
       const timestamp = Date.now();
       const plain =
         `jsapi_ticket=${ticket}&noncestr=${nonceStr}&timestamp=${timestamp}&url=${pageUrl}`;
       const signature = await sha1Hex(plain);
+      const category = Array.isArray(course.categories)
+        ? course.categories[0]
+        : course.categories;
+      const totalMs = performance.now() - requestStartedAt;
 
-      return Response.json({
-        appId,
-        signature,
-        nonceStr,
-        timestamp,
-        url: pageUrl,
-        jsApiList: ["DocsComponent"],
-        locale: "zh-CN",
-        embed_src: embedSrc,
-        request_id: requestId,
+      console.log("feishu_course_bootstrap_timing", {
+        requestId,
+        courseId,
+        databaseMs: Math.round(databaseMs),
+        feishuMs: Math.round(feishuMs),
+        totalMs: Math.round(totalMs),
+        embedCacheHit: hasCurrentEmbedCache,
       });
+
+      return Response.json(
+        {
+          appId,
+          signature,
+          nonceStr,
+          timestamp,
+          url: pageUrl,
+          jsApiList: ["DocsComponent"],
+          locale: "zh-CN",
+          embed_src: embedSrc,
+          request_id: requestId,
+          course: {
+            id: course.id,
+            title: course.title,
+            category: category?.name ?? "",
+            category_class: category?.color_class ?? "category-gold",
+            summary: course.summary,
+            cover: course.cover,
+            learners: course.learners,
+            views:
+              typeof nextViewsResult.data === "number"
+                ? nextViewsResult.data
+                : course.views,
+            is_member_only: course.is_member_only,
+            feishu_doc_url: docUrl,
+            can_access: true,
+          },
+        },
+        {
+          headers: {
+            "Server-Timing":
+              `database;dur=${databaseMs.toFixed(1)}, feishu;dur=${feishuMs.toFixed(1)}, total;dur=${totalMs.toFixed(1)}`,
+          },
+        },
+      );
     } catch (error) {
       console.error("feishu_doc_signature_failed", {
         requestId,

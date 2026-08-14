@@ -5,7 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import { FeishuDocsViewer } from "@/components/course/FeishuDocsViewer";
+import {
+  FeishuDocsViewer,
+  preloadFeishuDocsSdk,
+  type FeishuSignature,
+} from "@/components/course/FeishuDocsViewer";
 import { ApiError, apiFetch } from "@/lib/api";
 
 type CourseDetail = {
@@ -20,6 +24,10 @@ type CourseDetail = {
   is_member_only: boolean;
   feishu_doc_url: string;
   can_access: boolean;
+};
+
+type CourseBootstrap = FeishuSignature & {
+  course: CourseDetail;
 };
 
 type ErrorKind = "auth" | "member" | "other" | "";
@@ -37,6 +45,7 @@ function CourseDetailInner() {
   const router = useRouter();
   const { isLoggedIn, isMember, loading: authLoading } = useAuth();
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [feishuAuth, setFeishuAuth] = useState<FeishuSignature | null>(null);
   const [error, setError] = useState("");
   const [errorKind, setErrorKind] = useState<ErrorKind>("");
   const [loading, setLoading] = useState(true);
@@ -45,6 +54,9 @@ function CourseDetailInner() {
 
   useEffect(() => {
     document.body.classList.add("course-reader-app");
+    void preloadFeishuDocsSdk().catch(() => {
+      // 组件挂载时会重试，并在失败后提供飞书外链兜底。
+    });
     return () => document.body.classList.remove("course-reader-app");
   }, []);
 
@@ -67,10 +79,20 @@ function CourseDetailInner() {
     setError("");
     setErrorKind("");
     setCourse(null);
+    setFeishuAuth(null);
 
-    void apiFetch<CourseDetail>(`/api/courses/${validCourseId}`)
+    void apiFetch<CourseBootstrap>("/api/feishu/doc-signature", {
+      method: "POST",
+      body: {
+        page_url: window.location.href.split("#")[0],
+        course_id: Number(validCourseId),
+      },
+    })
       .then((data) => {
-        if (!cancelled) setCourse(data);
+        if (!cancelled) {
+          setCourse(data.course);
+          setFeishuAuth(data);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -163,6 +185,7 @@ function CourseDetailInner() {
         src={course.feishu_doc_url}
         title={course.title}
         fullScreen
+        initialAuth={feishuAuth ?? undefined}
       />
     </main>
   );
