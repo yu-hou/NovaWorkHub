@@ -44,6 +44,26 @@ type CourseRow = {
   course_contents?: { feishu_doc_url: string } | { feishu_doc_url: string }[];
 };
 
+type CatalogItemRow = {
+  id: number;
+  page: "events" | "cases";
+  title: string;
+  summary: string;
+  category: string;
+  category_class: string;
+  tags: string[] | null;
+  cover: string;
+  learners: number;
+  views: number;
+  cta: string;
+  is_member_only: boolean;
+  is_published: boolean;
+  sort_order: number;
+  catalog_contents?: { href: string } | { href: string }[];
+  created_at?: string;
+  updated_at?: string;
+};
+
 function fail(error: { message?: string; code?: string } | null, fallback: string): never {
   let detail = error?.message || fallback;
   if (error?.code === "23505") detail = "记录已存在，请勿重复创建";
@@ -139,6 +159,127 @@ function courseAdminOut(row: CourseRow) {
   };
 }
 
+function uniqueTags(input: unknown, fallback: string[] = []) {
+  const raw = Array.isArray(input) ? input : typeof input === "string" ? input.split(",") : fallback;
+  const tags: string[] = [];
+  for (const item of raw) {
+    const tag = String(item ?? "").trim();
+    if (tag && !tags.includes(tag)) tags.push(tag);
+    if (tags.length >= 4) break;
+  }
+  return tags;
+}
+
+function catalogPageFromPath(path: string) {
+  const match = path.match(/^\/api\/(?:admin\/)?catalog\/(events|cases)(?:\/(\d+))?$/);
+  if (!match) return null;
+  return { page: match[1] as "events" | "cases", id: match[2] ? Number(match[2]) : null };
+}
+
+function catalogCardOut(row: CatalogItemRow) {
+  const content = one(row.catalog_contents);
+  const tags = uniqueTags(row.tags, [
+    row.category,
+    row.page === "events" ? "活动" : "案例",
+    row.is_member_only ? "会员专享" : "公开",
+  ]);
+  return {
+    id: String(row.id),
+    sortOrder: row.sort_order,
+    title: row.title,
+    category: row.category,
+    categoryClass: row.category_class,
+    tags,
+    summary: row.summary,
+    cover: row.cover || null,
+    learners: row.learners.toLocaleString("en-US"),
+    views: row.views.toLocaleString("en-US"),
+    cta: row.cta || (row.page === "events" ? "查看详情" : "查看案例"),
+    locked: row.is_member_only,
+    href: content?.href ?? null,
+  };
+}
+
+function catalogAdminOut(row: CatalogItemRow) {
+  const content = one(row.catalog_contents);
+  return {
+    id: row.id,
+    page: row.page,
+    title: row.title,
+    summary: row.summary,
+    category: row.category,
+    category_class: row.category_class,
+    tags: uniqueTags(row.tags, [
+      row.category,
+      row.page === "events" ? "活动" : "案例",
+      row.is_member_only ? "会员专享" : "公开",
+    ]),
+    cover: row.cover,
+    learners: row.learners,
+    views: row.views,
+    cta: row.cta,
+    is_member_only: row.is_member_only,
+    is_published: row.is_published,
+    sort_order: row.sort_order,
+    href: content?.href ?? "",
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+async function loadCatalogPage<T>(page: "events" | "cases", admin = false): Promise<T> {
+  const supabase = getSupabase();
+  let query = supabase
+    .from("catalog_items")
+    .select("*")
+    .eq("page", page)
+    .order("sort_order")
+    .order("id", { ascending: false });
+  if (!admin) query = query.eq("is_published", true);
+  const { data, error } = await query;
+  if (error) fail(error, page === "events" ? "活动加载失败" : "案例加载失败");
+  const rows = (data ?? []) as CatalogItemRow[];
+  if (rows.length > 0) {
+    const { data: contents, error: contentsError } = await supabase
+      .from("catalog_contents")
+      .select("catalog_item_id,href")
+      .in("catalog_item_id", rows.map((row) => row.id));
+    if (contentsError && admin) fail(contentsError, "内容地址加载失败");
+    const hrefById = new Map(
+      (contents ?? []).map((content) => [content.catalog_item_id, content.href]),
+    );
+    for (const row of rows) {
+      const href = hrefById.get(row.id);
+      row.catalog_contents = href ? { href } : [];
+    }
+  }
+  if (admin) return rows.map(catalogAdminOut) as T;
+
+  const categoryCounts = new Map<string, { count: number; categoryClass: string }>();
+  for (const row of rows) {
+    const current = categoryCounts.get(row.category);
+    categoryCounts.set(row.category, {
+      count: (current?.count ?? 0) + 1,
+      categoryClass: current?.categoryClass ?? row.category_class,
+    });
+  }
+  return {
+    searchPlaceholder: page === "events" ? "搜索活动" : "搜索案例",
+    defaultSort: "newest",
+    emptyText: page === "events" ? "暂无活动内容。" : "暂无案例内容。",
+    categories: [
+      { value: "", label: "全部", count: rows.length },
+      ...Array.from(categoryCounts.entries()).map(([category, meta]) => ({
+        value: category,
+        label: category,
+        count: meta.count,
+        categoryClass: meta.categoryClass,
+      })),
+    ],
+    cards: rows.map(catalogCardOut),
+  } as T;
+}
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const supabase = getSupabase();
   const method = (options.method || "GET").toUpperCase();
@@ -201,6 +342,111 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         };
       }),
     } as T;
+  }
+
+  const catalogPath = catalogPageFromPath(path);
+  if (catalogPath && method === "GET" && !path.includes("/admin/")) {
+    return loadCatalogPage(catalogPath.page);
+  }
+
+  if (catalogPath && path.includes("/admin/")) {
+    if (method === "GET" && catalogPath.id === null) {
+      return loadCatalogPage(catalogPath.page, true);
+    }
+    if (method === "POST" && catalogPath.id === null) {
+      const page = catalogPath.page;
+      const tags = uniqueTags(body.tags);
+      const { data: lastItem, error: orderError } = await supabase
+        .from("catalog_items")
+        .select("sort_order")
+        .eq("page", page)
+        .order("sort_order", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (orderError) fail(orderError, "内容顺序读取失败");
+
+      const { data, error } = await supabase
+        .from("catalog_items")
+        .insert({
+          page,
+          title: String(body.title ?? "").trim(),
+          summary: String(body.summary ?? "").trim(),
+          category: String(body.category ?? "").trim(),
+          category_class: String(body.category_class ?? "category-gold"),
+          tags,
+          cover: String(body.cover ?? "").trim(),
+          learners: Number(body.learners ?? 0),
+          views: Number(body.views ?? 0),
+          cta: String(body.cta ?? (page === "events" ? "查看详情" : "查看案例")).trim(),
+          is_member_only: Boolean(body.is_member_only),
+          is_published: body.is_published !== false,
+          sort_order: Number(body.sort_order ?? (lastItem?.sort_order ?? 0) + 1),
+        })
+        .select()
+        .single();
+      if (error) fail(error, "创建内容失败");
+      const href = String(body.href ?? "").trim();
+      if (href) {
+        const { error: contentError } = await supabase.from("catalog_contents").insert({
+          catalog_item_id: data.id,
+          href,
+        });
+        if (contentError) {
+          await supabase.from("catalog_items").delete().eq("id", data.id);
+          fail(contentError, "保存内容地址失败");
+        }
+      }
+      return catalogAdminOut(data as CatalogItemRow) as T;
+    }
+    if (method === "PATCH" && catalogPath.id !== null) {
+      const patch: Record<string, unknown> = {};
+      for (const key of [
+        "title",
+        "summary",
+        "category",
+        "category_class",
+        "cover",
+        "cta",
+        "learners",
+        "views",
+        "sort_order",
+        "is_member_only",
+        "is_published",
+      ]) {
+        if (body[key] !== undefined) patch[key] = body[key];
+      }
+      if (body.tags !== undefined) patch.tags = uniqueTags(body.tags);
+      for (const key of ["title", "summary", "category", "category_class", "cover", "cta"]) {
+        if (patch[key] !== undefined) {
+          patch[key] = String(patch[key] ?? "").trim();
+        }
+      }
+      const { error } = await supabase
+        .from("catalog_items")
+        .update(patch)
+        .eq("page", catalogPath.page)
+        .eq("id", catalogPath.id);
+      if (error) fail(error, "更新内容失败");
+      if (body.href !== undefined) {
+        const href = String(body.href ?? "").trim();
+        const contentQuery = supabase.from("catalog_contents");
+        const { error: contentError } = href
+          ? await contentQuery.upsert({ catalog_item_id: catalogPath.id, href })
+          : await contentQuery.delete().eq("catalog_item_id", catalogPath.id);
+        if (contentError) fail(contentError, "更新内容地址失败");
+      }
+      return { id: catalogPath.id } as T;
+    }
+    if (method === "DELETE" && catalogPath.id !== null) {
+      const { error } = await supabase
+        .from("catalog_items")
+        .delete()
+        .eq("page", catalogPath.page)
+        .eq("id", catalogPath.id);
+      if (error) fail(error, "删除内容失败");
+      return { message: "内容已删除" } as T;
+    }
   }
 
   const courseDetail = path.match(/^\/api\/courses\/(\d+)$/);
@@ -286,31 +532,30 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
       .limit(1)
       .maybeSingle();
     if (orderError) fail(orderError, "课程顺序读取失败");
-    const { data: course, error } = await supabase
-      .from("courses")
-      .insert({
-        category_id: category.id,
-        title: body.title,
-        summary: body.summary ?? "",
-        cover: body.cover ?? "",
-        learners: body.learners ?? 0,
-        views: body.views ?? 0,
-        is_member_only: body.is_member_only ?? false,
-        is_published: body.is_published ?? true,
-        sort_order: (lastCourse?.sort_order ?? 0) + 1,
-      })
-      .select()
-      .single();
-    if (error) fail(error, "创建课程失败");
-    const { error: contentError } = await supabase.from("course_contents").insert({
-      course_id: course.id,
-      feishu_doc_url: body.feishu_doc_url,
+    const { data: courseId, error } = await supabase.rpc("admin_create_course", {
+      input_category_id: category.id,
+      input_title: String(body.title ?? "").trim(),
+      input_summary: String(body.summary ?? "").trim(),
+      input_cover: String(body.cover ?? "").trim(),
+      input_learners: Number(body.learners ?? 0),
+      input_views: Number(body.views ?? 0),
+      input_member_only: Boolean(body.is_member_only),
+      input_published: body.is_published !== false,
+      input_sort_order: (lastCourse?.sort_order ?? 0) + 1,
+      input_feishu_doc_url: String(body.feishu_doc_url ?? "").trim(),
     });
-    if (contentError) {
-      await supabase.from("courses").delete().eq("id", course.id);
-      fail(contentError, "保存课程内容失败");
-    }
-    return course as T;
+    if (error) fail(error, "创建课程失败");
+    return { id: Number(courseId) } as T;
+  }
+  if (path === "/api/admin/courses/reorder" && method === "POST") {
+    const { error } = await supabase.rpc("admin_swap_course_order", {
+      first_course_id: Number(body.first_course_id),
+      first_sort_order: Number(body.first_sort_order),
+      second_course_id: Number(body.second_course_id),
+      second_sort_order: Number(body.second_sort_order),
+    });
+    if (error) fail(error, "课程顺序更新失败");
+    return { message: "课程顺序已更新" } as T;
   }
   const adminCourseId = path.match(/^\/api\/admin\/courses\/(\d+)$/);
   if (adminCourseId && method === "PATCH") {
@@ -369,10 +614,12 @@ async function optimizeCover(file: File) {
 }
 
 export async function apiUpload<T>(path: string, file: File): Promise<T> {
-  if (path !== "/api/admin/uploads/cover") throw new ApiError(404, "未知上传路径");
+  if (path !== "/api/admin/uploads/cover" && path !== "/api/admin/uploads/catalog-cover") {
+    throw new ApiError(404, "未知上传路径");
+  }
   if (file.size > 4 * 1024 * 1024) throw new ApiError(400, "图片不能超过 4MB");
   const { blob, width, height } = await optimizeCover(file);
-  const objectPath = `covers/${crypto.randomUUID()}.webp`;
+  const objectPath = `${path.endsWith("catalog-cover") ? "catalog-covers" : "covers"}/${crypto.randomUUID()}.webp`;
   const supabase = getSupabase();
   const { error } = await supabase.storage.from("course-covers").upload(objectPath, blob, {
     contentType: "image/webp",

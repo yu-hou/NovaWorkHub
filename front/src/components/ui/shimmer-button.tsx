@@ -18,11 +18,11 @@ export const ShimmerButton = React.forwardRef<
 >(
   (
     {
-      shimmerColor = "#ffffff",
+      shimmerColor = "#ff682c",
       shimmerSize = "0.05em",
       shimmerDuration = "3s",
-      borderRadius = "100px",
-      background = "rgba(0, 0, 0, 1)",
+      borderRadius = "0px",
+      background = "#202020",
       className,
       children,
       ...props
@@ -69,7 +69,7 @@ export const ShimmerButton = React.forwardRef<
           className={cn(
             "absolute inset-0 size-full",
 
-            "rounded-2xl px-4 py-1.5 text-sm font-medium shadow-[inset_0_-8px_10px_#ffffff1f]",
+            "rounded-none px-4 py-1.5 text-sm font-medium shadow-[inset_0_-8px_10px_#ffffff1f]",
 
             // transition
             "transform-gpu transition-all duration-300 ease-in-out",

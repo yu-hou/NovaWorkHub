@@ -2,19 +2,19 @@
    模拟数据层：以下所有内容（导航之外）均为虚构样例，不代表真实课程/案例/福利
    --------------------------------------------------------------------- */
 const ICONS = {
-  home: '<path d="M3 10.5 12 3l9 7.5"></path><path d="M5.5 9.5V21h13V9.5"></path><path d="M9.5 21v-6h5v6"></path>',
-  paths: '<path d="M4 18 9 13l4 3 7-9"></path><path d="M15 7h5v5"></path><circle cx="4" cy="18" r="1"></circle><circle cx="9" cy="13" r="1"></circle>',
-  learning: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H21v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path><path d="M4 5.5v16"></path><path d="M8 7h9"></path><path d="M8 11h7"></path>',
-  cases: '<path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h3A2.5 2.5 0 0 1 17 5.5V7"></path><path d="M4 7h18v14H4z"></path><path d="M4 12h18"></path><path d="M10 12v2h4v-2"></path>',
-  events: '<path d="M7 3v4"></path><path d="M17 3v4"></path><path d="M4.5 6h17v16h-17z"></path><path d="M4.5 10h17"></path><path d="M8 14h3"></path><path d="M14 14h3"></path><path d="M8 18h3"></path>',
-  replays: '<circle cx="12" cy="12" r="9"></circle><path d="m10 8 6 4-6 4z"></path>',
-  benefits: '<path d="M4 11h18v5H4z"></path><path d="M6 16v6h16v-6"></path><path d="M12 11v11"></path><path d="M12 7.5c0-2-1.6-3.5-3.6-3.5C6.8 4 6 5.1 6 6.2 6 8.8 9.2 9 12 9z"></path><path d="M12 7.5c0-2 1.6-3.5 3.6-3.5 1.6 0 2.4 1.1 2.4 2.2C18 8.8 14.8 9 12 9z"></path>',
-  token: '<path d="M5 21V9"></path><path d="M12 21V4"></path><path d="M19 21v-7"></path><path d="M3.5 21h17"></path><path d="m9 7 3-3 3 3"></path>',
+  home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>',
+  paths: '<circle cx="6" cy="19" r="3"></circle><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path><circle cx="18" cy="5" r="3"></circle>',
+  learning: '<path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>',
+  cases: '<path d="M12 17V7"></path><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"></path><rect x="3" y="7" width="18" height="4" rx="1"></rect>',
+  events: '<path d="M8 2v4"></path><path d="M16 2v4"></path><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M3 10h18"></path><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path>',
+  replays: '<rect x="4" y="5" width="16" height="11" rx="2"></rect><path d="m10.2 8.6 4.6 2.4-4.6 2.4V8.6ZM9 20h6M12 16v4"></path>',
+  benefits: '<path d="M12 7v14"></path><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"></path><rect x="3" y="7" width="18" height="4" rx="1"></rect>',
+  token: '<path d="M12 17V7"></path><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"></path><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"></path>',
   submit: '<path d="m4 12 16-8-5 16-3-7z"></path><path d="m12 13 8-9"></path>',
-  about: '<circle cx="9" cy="8" r="3"></circle><path d="M3.5 20a5.5 5.5 0 0 1 11 0"></path><path d="M15 5.5a3 3 0 0 1 0 5.8"></path><path d="M17 14a5 5 0 0 1 4.5 5"></path>',
-  more: '<rect x="5.2" y="5.2" width="5.4" height="5.4" rx="1.35"></rect><rect x="13.4" y="5.2" width="5.4" height="5.4" rx="1.35"></rect><rect x="5.2" y="13.4" width="5.4" height="5.4" rx="1.35"></rect><path d="M15 16.1h4"></path><path d="M17 14.1v4"></path>',
-  chevron: '<path d="m6 9 6 6 6-6"></path>',
-  receipt: '<path d="M7 3.5h10l2 2.5v14.5l-2.5-1.5L14 20.5l-2 1.5-2-1.5-2.5 1.5V6z"></path><path d="M9.5 8.5h5"></path><path d="M9.5 12h5"></path>',
+  about: '<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>',
+  more: '<circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle>',
+  chevron: '<path d="m9 6 6 6-6 6"></path>',
+  receipt: '<path d="M12 17V7"></path><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"></path><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"></path>',
   pathBeginner: '<circle cx="12" cy="12" r="8.5"></circle><path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9z"></path>',
   pathBolt: '<path d="M13.2 2.8 5.8 13h5.4l-.4 8.2L18.2 11h-5.4z"></path>',
   pathPen: '<path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8z"></path><path d="m13.8 7 3.2 3.2"></path><path d="M14.8 4.2 16.5 2.5 21.5 7.5 19.8 9.2"></path>',
@@ -128,7 +128,7 @@ const NAV_GROUPS = [
   {
     quick: true,
     items: [
-      { key: 'home', label: '首页', icon: 'home', active: true, badge: 3 },
+      { key: 'home', label: '首页', icon: 'home', active: true },
       { key: 'token', label: 'Token Rank', icon: 'token' },
     ],
   },
@@ -751,21 +751,24 @@ function renderCasesGrid() {
   const grid = document.getElementById('casesGrid');
   document.getElementById('casesEmpty').classList.toggle('hidden', cases.length > 0);
   grid.innerHTML = cases.map((item, i) =>
-    '<article class="course-card event-card case-card rise-in" style="animation-delay:' + (i * 40) + 'ms" tabindex="0" role="button" aria-label="查看案例：' + item.title + '" onclick="toast(\'演示页面：案例详情\')">' +
-      '<div class="course-card-media"><img src="' + item.cover + '" alt="' + item.title + ' 案例封面" loading="lazy"></div>' +
-      '<div class="course-card-body">' +
-        '<h4>' + item.title + '</h4>' +
-        '<div class="course-card-tags">' +
-          '<span class="course-card-tag">' + item.category + '</span>' +
-          '<span class="course-card-tag">案例</span>' +
-          '<span class="course-card-tag">' + item.access + '</span>' +
+    '<article class="case-card rise-in" style="animation-delay:' + (i * 40) + 'ms" tabindex="0" role="button" aria-label="查看案例：' + item.title + '" onclick="toast(\'演示页面：案例详情\')">' +
+      '<div class="case-card-cover">' +
+        '<img src="' + item.cover + '" alt="' + item.title + ' 案例封面" loading="lazy">' +
+        '<div class="case-card-tags" aria-label="案例标签">' +
+          '<span class="case-card-tag">' + item.category + '</span>' +
+          '<span class="case-card-tag">AI</span>' +
+          '<span class="case-card-tag">案例</span>' +
+          '<span class="case-card-tag">' + item.access + '</span>' +
         '</div>' +
-        '<p class="course-card-summary">' + item.desc + '</p>' +
-        '<div class="course-card-facts">' +
-          '<div class="course-card-fact"><span class="course-card-fact-icon">' + iconSvg('statUsers', 'course-fact-svg') + '</span><span>' + item.members + ' 人参与</span></div>' +
-          '<div class="course-card-fact"><span class="course-card-fact-icon">' + iconSvg('statViews', 'course-fact-svg') + '</span><span>' + item.views + ' 次浏览</span></div>' +
-          '<div class="course-card-fact summary"><span class="course-card-fact-icon">' + iconSvg('cases', 'course-fact-svg') + '</span><span>' + item.access + '</span></div>' +
+      '</div>' +
+      '<div class="case-card-content">' +
+        '<h4 class="case-card-title">' + item.title + '</h4>' +
+        '<div class="case-card-stats">' +
+          '<span class="case-card-stat" aria-label="' + item.members + ' 人参与"><span class="case-card-stat-icon">' + iconSvg('statUsers', 'case-card-stat-svg') + '</span><span>' + item.members + '</span></span>' +
+          '<span class="case-card-stat" aria-label="' + item.views + ' 次浏览"><span class="case-card-stat-icon case-card-stat-icon-lg">' + iconSvg('statViews', 'case-card-stat-svg') + '</span><span>' + item.views + '</span></span>' +
         '</div>' +
+        '<p class="case-card-desc">' + item.desc + '</p>' +
+        '<span class="case-card-action">查看案例</span>' +
       '</div>' +
     '</article>'
   ).join('');
@@ -797,7 +800,7 @@ function renderCases() {
   });
 }
 
-/* ---- 活动：复刻 /events 的搜索、类别筛选和三列封面卡片 ---- */
+/* ---- 活动：复刻 /events 的搜索、类别筛选和参考卡片 ---- */
 function eventCategories() {
   return [...new Set(EVENTS.map(event => event.category))];
 }
@@ -831,21 +834,24 @@ function renderEventsGrid() {
   const grid = document.getElementById('eventsGrid');
   document.getElementById('eventsEmpty').classList.toggle('hidden', events.length > 0);
   grid.innerHTML = events.map((event, i) =>
-    '<article class="course-card event-card rise-in" style="animation-delay:' + (i * 40) + 'ms" tabindex="0" role="button" aria-label="查看活动：' + event.title + '" onclick="toast(\'演示页面：活动详情\')">' +
-      '<div class="course-card-media"><img src="' + event.cover + '" alt="' + event.title + ' 活动封面" loading="lazy"></div>' +
-      '<div class="course-card-body">' +
+    '<article class="event-card rise-in" style="animation-delay:' + (i * 40) + 'ms" tabindex="0" role="button" aria-label="查看活动：' + event.title + '" onclick="toast(\'演示页面：活动详情\')">' +
+      '<div class="event-card-cover">' +
+        '<img src="' + event.cover + '" alt="' + event.title + ' 活动封面" loading="lazy">' +
+        '<div class="event-card-tags" aria-label="活动标签">' +
+          '<span class="event-card-tag">' + event.category + '</span>' +
+          '<span class="event-card-tag">活动</span>' +
+          '<span class="event-card-tag">会员专享</span>' +
+          '<span class="event-card-tag">' + event.members + '人</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="event-card-body">' +
         '<h4>' + event.title + '</h4>' +
-        '<div class="course-card-tags">' +
-          '<span class="course-card-tag">' + event.category + '</span>' +
-          '<span class="course-card-tag">活动</span>' +
-          '<span class="course-card-tag">会员专享</span>' +
+        '<div class="event-card-stats">' +
+          '<span class="event-card-stat" aria-label="' + event.members + ' 人参与"><span class="event-card-stat-icon">' + iconSvg('statUsers', 'event-card-stat-svg') + '</span><span>' + event.members + '</span></span>' +
+          '<span class="event-card-stat" aria-label="' + event.views + ' 次浏览"><span class="event-card-stat-icon event-card-stat-icon-lg">' + iconSvg('statViews', 'event-card-stat-svg') + '</span><span>' + event.views + '</span></span>' +
         '</div>' +
-        '<p class="course-card-summary">' + event.desc + '</p>' +
-        '<div class="course-card-facts">' +
-          '<div class="course-card-fact"><span class="course-card-fact-icon">' + iconSvg('statUsers', 'course-fact-svg') + '</span><span>' + event.members + ' 人参与</span></div>' +
-          '<div class="course-card-fact"><span class="course-card-fact-icon">' + iconSvg('statViews', 'course-fact-svg') + '</span><span>' + event.views + ' 次浏览</span></div>' +
-          '<div class="course-card-fact summary"><span class="course-card-fact-icon">' + iconSvg('courseSpark', 'course-fact-svg') + '</span><span>' + event.focus + '</span></div>' +
-        '</div>' +
+        '<p>' + event.desc + ' · ' + event.focus + '</p>' +
+        '<span class="event-card-action">查看详情</span>' +
       '</div>' +
     '</article>'
   ).join('');
@@ -892,9 +898,9 @@ function initPage() {
   } else if (page === 'learning') {
     if (!document.querySelector('[data-dynamic-courses]')) renderCourses();
   } else if (page === 'cases') {
-    renderCases();
+    if (!document.querySelector('[data-dynamic-catalog="cases"]')) renderCases();
   } else if (page === 'events') {
-    renderEvents();
+    if (!document.querySelector('[data-dynamic-catalog="events"]')) renderEvents();
   } else if (page === 'replays') {
     setupLiveReplayEmpty();
   } else if (page === 'benefits') {

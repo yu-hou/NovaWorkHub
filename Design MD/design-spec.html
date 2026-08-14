@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaWorkHub · Design Spec</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Design Tokens ─── */
+    :root {
+      --color-canvas:          #FFFFFF;
+      --color-canvas-soft:     #F2F2F3;
+      --color-canvas-card:     #FAFAFB;
+      --color-canvas-image:    #DEDEDE;
+      --color-canvas-tag:      #FFFFFF;
+
+      --color-text-ink:        #1A1A1C;
+      --color-text-primary:    #000000;
+      --color-text-body:       #3A3A3C;
+      --color-text-secondary:  #181818;
+      --color-text-tertiary:   #666666;
+      --color-text-mid:        #8E8E93;
+      --color-text-tag:        #3C3C43;
+      --color-text-on-primary: #FFFFFF;
+
+      --color-primary:         #7C5CFC;
+      --color-primary-soft:    #EDE8FF;
+      --color-primary-deep:    #5A3DD8;
+      --color-action:          #3C3C43;
+
+      --color-border-soft:     rgba(0,0,0,.08);
+      --color-border-sidebar:  rgba(99,99,99,.14);
+      --color-border-action:   #3C3C43;
+      --color-border-card:     rgba(99,99,99,.14);
+
+      --color-search-bg:       rgba(32,21,21,.07);
+      --color-kbd-bg:          rgba(32,21,21,.12);
+      --color-hover:           rgba(32,21,21,.06);
+
+      --font-display: 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono:    'Source Code Pro', monospace;
+
+      --radius-btn:   10px;
+      --sidebar-w:    248px;
+    }
+
+    /* ─── Reset ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-display);
+      background: var(--color-canvas);
+      color: var(--color-text-body);
+      height: 100vh;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+    }
+
+    /* ══════════════════════════════
+       SIDEBAR
+    ══════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--color-canvas-soft);
+      backdrop-filter: blur(2px);
+      border-right: 1px solid var(--color-border-sidebar);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .logo-mark {
+      width: 40px; height: 40px;
+      border-radius: 9999px;
+      background: var(--color-text-ink);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 20px; height: 20px; }
+    .header-text { flex: 1; }
+    .header-text .title {
+      font-size: 19px; font-weight: 700;
+      color: var(--color-text-ink); line-height: 1.2;
+    }
+    .header-text .subtitle {
+      font-size: 12px; color: var(--color-text-mid);
+      font-family: var(--font-mono);
+    }
+    .collapse-btn {
+      display: flex; gap: 3px; cursor: pointer; padding: 4px;
+    }
+    .collapse-btn span {
+      display: block; width: 2px; height: 16px; border-radius: 2px;
+    }
+    .collapse-btn span:first-child { background: var(--color-text-ink); }
+    .collapse-btn span:last-child  { background: var(--color-text-mid); }
+
+    /* Search */
+    .sidebar-search {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--color-search-bg);
+      border-radius: 10px;
+      padding: 0 12px;
+      height: 36px;
+      margin-bottom: 24px;
+    }
+    .sidebar-search svg { width: 15px; height: 15px; color: var(--color-text-mid); flex-shrink: 0; }
+    .sidebar-search input {
+      flex: 1; border: none; background: transparent; outline: none;
+      font-size: 14px; color: var(--color-text-body);
+      font-family: var(--font-display);
+    }
+    .sidebar-search input::placeholder { color: var(--color-text-mid); }
+    .kbd-badge {
+      background: var(--color-kbd-bg);
+      border-radius: 5px;
+      padding: 2px 5px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--color-text-mid);
+    }
+
+    /* Nav */
+    .nav-list { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; }
+    .group-divider {
+      height: 1px; background: var(--color-border-soft);
+      margin: 12px 0 8px;
+    }
+    .group-label {
+      font-size: 11px; font-weight: 600; letter-spacing: .05em;
+      color: var(--color-text-mid); text-transform: uppercase;
+      padding: 0 8px; margin-bottom: 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      height: 44px; padding: 0 10px;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      font-size: 15px; font-weight: 500;
+      color: var(--color-text-body);
+      transition: background .15s;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: var(--color-hover); }
+    .nav-item.active {
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      font-weight: 600;
+    }
+    .nav-item.active svg { color: var(--color-text-on-primary); }
+    .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+    .nav-item .nav-label { flex: 1; }
+    .nav-badge {
+      background: var(--color-primary-soft);
+      color: var(--color-primary-deep);
+      font-size: 11px; font-family: var(--font-mono);
+      padding: 2px 7px; border-radius: 100px;
+    }
+
+    /* ══════════════════════════════
+       MAIN PANEL
+    ══════════════════════════════ */
+    .main-panel {
+      background: var(--color-canvas);
+      height: 100vh;
+      overflow-y: auto;
+      padding: 48px 56px;
+    }
+
+    /* Page sections */
+    .page-title {
+      font-size: 28px; font-weight: 700;
+      color: var(--color-text-ink);
+      margin-bottom: 6px;
+    }
+    .page-sub {
+      font-size: 14px; color: var(--color-text-mid);
+      font-family: var(--font-mono);
+      margin-bottom: 48px;
+    }
+
+    .section { margin-bottom: 64px; }
+    .section-title {
+      font-size: 13px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--color-text-mid);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--color-border-soft);
+    }
+
+    /* soft-card wrapper */
+    .soft-card {
+      background: var(--color-canvas-soft);
+      border-radius: 16px;
+      padding: 28px 32px;
+    }
+
+    /* ── Color Tokens ── */
+    .token-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .token-item {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .token-swatch {
+      width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+      border: 1px solid var(--color-border-soft);
+    }
+    .token-info { min-width: 0; }
+    .token-name {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--color-text-body); margin-bottom: 2px;
+    }
+    .token-value {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--color-text-mid);
+    }
+    .token-desc { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+
+    .token-group-label {
+      font-size: 12px; font-weight: 600;
+      color: var(--color-text-secondary);
+      margin: 24px 0 12px;
+    }
+    .token-group-label:first-child { margin-top: 0; }
+
+    /* ── Typography ── */
+    .type-row {
+      display: flex; align-items: baseline; gap: 24px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--color-border-soft);
+    }
+    .type-row:last-child { border-bottom: none; }
+    .type-sample { flex: 1; color: var(--color-text-primary); }
+    .type-meta {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--color-text-mid); text-align: right;
+      white-space: nowrap;
+    }
+
+    /* ── Component: Card ── */
+    .component-preview {
+      display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start;
+    }
+    .card {
+      position: relative;
+      display: flex; flex-direction: column;
+      width: 314px; height: 426px;
+      background: var(--color-canvas-card);
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 0.5px var(--color-border-card);
+    }
+    .card__image {
+      width: 100%; height: 222px;
+      background: var(--color-canvas-image);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card__image svg { opacity: .3; }
+    .card__tags {
+      position: absolute; left: 24px; top: 179px;
+      display: flex; flex-direction: row; gap: 8px;
+    }
+    .card__tag {
+      display: flex; justify-content: center; align-items: flex-end;
+      padding: 8px 12px; height: 31px;
+      background: var(--color-canvas-tag);
+      border-radius: 100px;
+      font-family: var(--font-mono); font-size: 12px; line-height: 15px;
+      color: var(--color-text-tag); white-space: nowrap;
+    }
+    .card__content {
+      display: flex; flex-direction: column;
+      align-items: flex-start;
+      padding: 24px; gap: 16px; flex: 1;
+    }
+    .card__headline {
+      font-family: var(--font-display);
+      font-weight: 510; font-size: 18px; line-height: 21px;
+      color: var(--color-text-primary);
+    }
+    .card__stats {
+      display: flex; flex-direction: row;
+      align-items: center; gap: 10px;
+    }
+    .card__stat-item {
+      display: flex; align-items: center; gap: 4px;
+      font-family: var(--font-mono); font-size: 14px; line-height: 18px;
+      color: var(--color-text-secondary);
+    }
+    .card__stat-item svg { width: 18px; height: 18px; }
+    .card__description {
+      font-family: var(--font-mono); font-size: 14px; line-height: 18px;
+      color: var(--color-text-tertiary);
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .card__button {
+      display: inline-flex; justify-content: center; align-items: center;
+      padding: 8px 16px; height: 31px;
+      background: var(--color-action);
+      border: 1px solid var(--color-border-action);
+      border-radius: 12px;
+      font-family: var(--font-mono); font-size: 12px; line-height: 15px;
+      color: var(--color-text-on-primary);
+      cursor: pointer; user-select: none;
+    }
+
+    /* annotation panel */
+    .annotation {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--color-text-tertiary); line-height: 1.8;
+      max-width: 280px;
+    }
+    .annotation strong { color: var(--color-text-secondary); font-weight: 600; }
+    .annotation code {
+      background: var(--color-border-soft);
+      padding: 1px 5px; border-radius: 4px;
+      font-size: 11px; color: var(--color-text-body);
+    }
+    .annotation-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: baseline; }
+    .annotation-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--color-primary); flex-shrink: 0; margin-top: 5px;
+    }
+
+    /* ── Nav Component Spec ── */
+    .nav-spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .spec-block {
+      background: var(--color-canvas-soft); border-radius: 12px; padding: 20px 24px;
+    }
+    .spec-block h4 {
+      font-size: 13px; font-weight: 600; color: var(--color-text-secondary);
+      margin-bottom: 12px;
+    }
+    .spec-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .spec-table td {
+      padding: 6px 0; border-bottom: 1px solid var(--color-border-soft);
+      vertical-align: top;
+    }
+    .spec-table tr:last-child td { border-bottom: none; }
+    .spec-table td:first-child {
+      font-family: var(--font-mono); color: var(--color-text-mid);
+      width: 50%; padding-right: 12px;
+    }
+    .spec-table td:last-child { color: var(--color-text-body); font-family: var(--font-mono); }
+
+    /* nav state demo */
+    .nav-state-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .demo-nav-item {
+      display: flex; align-items: center; gap: 8px;
+      height: 44px; padding: 0 12px; border-radius: var(--radius-btn);
+      font-size: 15px; cursor: default; font-family: var(--font-display);
+    }
+    .demo-nav-item.state-default { color: var(--color-text-body); font-weight: 500; }
+    .demo-nav-item.state-active  {
+      background: var(--color-primary); color: var(--color-text-on-primary); font-weight: 600;
+    }
+    .demo-nav-item.state-hover   { background: var(--color-hover); color: var(--color-text-body); font-weight: 500; }
+    .demo-nav-item svg { width: 17px; height: 17px; }
+
+    /* ── scroll hidden ── */
+    ::-webkit-scrollbar { width: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 10 L10 4 L16 10 L10 16 Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+          <circle cx="10" cy="10" r="2" fill="white"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <div class="title">Oculis</div>
+        <div class="subtitle">hello@novawrk.com</div>
+      </div>
+      <div class="collapse-btn"><span></span><span></span></div>
+    </div>
+
+    <div class="sidebar-search">
+      <svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5 L14 14"/>
+      </svg>
+      <input type="text" placeholder="Search" />
+      <span class="kbd-badge">⌘K</span>
+    </div>
+
+    <nav class="nav-list">
+      <!-- 核心视图 -->
+      <a class="nav-item active" data-section="tokens">
+        <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="2" y="2" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="2" width="5.5" height="5.5" rx="1.5"/>
+          <rect x="2" y="9.5" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1.5"/>
+        </svg>
+        <span class="nav-label">Design Tokens</span>
+      </a>
+      <a class="nav-item" data-section="typography">
+        <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M3 4h11M8.5 4v9M6 13h5"/>
+        </svg>
+        <span class="nav-label">Typography</span>
+      </a>
+      <a class="nav-item" data-section="nav-spec">
+        <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="2" y="2" width="4" height="13" rx="1.5"/>
+          <path d="M9 5h6M9 8.5h6M9 12h4"/>
+        </svg>
+        <span class="nav-label">Navigation</span>
+      </a>
+
+      <div class="group-divider"></div>
+      <div class="group-label">组件</div>
+
+      <a class="nav-item" data-section="card">
+        <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="2" y="2" width="13" height="13" rx="2.5"/>
+          <path d="M2 7h13"/>
+        </svg>
+        <span class="nav-label">Card</span>
+      </a>
+      <a class="nav-item" data-section="card">
+        <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="8.5" cy="8.5" r="6.5"/><path d="M8.5 5.5v3l2 1.5"/>
+        </svg>
+        <span class="nav-label">Templates</span>
+        <span class="nav-badge">10</span>
+      </a>
+      <a class="nav-item" data-section="tokens">
+        <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M3 13 L7 9 L10 12 L14 5"/>
+        </svg>
+        <span class="nav-label">Performance</span>
+      </a>
+      <a class="nav-item" data-section="tokens">
+        <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="8.5" cy="6" r="3"/><path d="M3 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/>
+        </svg>
+        <span class="nav-label">Feedback</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ══ MAIN PANEL ══ -->
+  <main class="main-panel" id="main-panel">
+
+    <!-- ── Design Tokens ── -->
+    <section class="section" id="section-tokens">
+      <div class="page-title">Design Tokens</div>
+      <div class="page-sub">全局色彩与排版变量 · 汇总自两份组件规范</div>
+
+      <div class="section-title">颜色 · 画布 / 背景层</div>
+      <div class="soft-card" style="margin-bottom:24px">
+        <div class="token-grid">
+          <div class="token-item">
+            <div class="token-swatch" style="background:#FFFFFF;box-shadow:0 0 0 1px rgba(0,0,0,.12)"></div>
+            <div class="token-info">
+              <div class="token-name">--color-canvas</div>
+              <div class="token-value">#FFFFFF</div>
+              <div class="token-desc">主体纯白背景</div>
+            </div>
+          </div>
+          <div class="token-item">
+            <div class="token-swatch" style="background:#F2F2F3"></div>
+            <div class="token-info">
+              <div class="token-name">--color-canvas-soft</div>
+              <div class="token-value">#F2F2F3</div>
+              <div class="token-desc">侧栏 / Soft Card 底色</div>
+            </div>
+          </div>
+          <div class="token-item">
+            <div class="token-swatch" style="background:#FAFAFB"></div>
+            <div class="token-info">
+              <div class="token-name">--color-canvas-card</div>
+              <div class="token-value">#FAFAFB</div>
+              <div class="token-desc">内容卡片背景</div>
+            </div>
+          </div>
+          <div class="token-item">
+            <div class="token-swatch" style="background:#DEDEDE"></div>
+            <div class="token-info">
+              <div class="token-name">--color-canvas-image</div>
+              <div class="token-value">#DEDEDE</div>
+              <div class="token-desc">图片占位背景</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">颜色 · 文字层</div>
+      <div class="soft-card" style="margin-bottom:24px">
+        <div class="token-grid">
+          <div class="token-item"><div class="token-swatch" style="background:#000000"></div><div class="token-info"><div class="token-name">--color-text-primary</div><div class="token-value">#000000</div><div class="token-desc">卡片标题</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#1A1A1C"></div><div class="token-info"><div class="token-name">--color-text-ink</div><div class="token-value">#1A1A1C</div><div class="token-desc">logo / 顶层标题</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#181818"></div><div class="token-info"><div class="token-name">--color-text-secondary</div><div class="token-value">#181818</div><div class="token-desc">数据统计数字</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#3A3A3C"></div><div class="token-info"><div class="token-name">--color-text-body</div><div class="token-value">#3A3A3C</div><div class="token-desc">导航项正文</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#3C3C43"></div><div class="token-info"><div class="token-name">--color-text-tag</div><div class="token-value">#3C3C43</div><div class="token-desc">标签 / action 元素</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#666666"></div><div class="token-info"><div class="token-name">--color-text-tertiary</div><div class="token-value">#666666</div><div class="token-desc">描述 / 次要说明</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#8E8E93"></div><div class="token-info"><div class="token-name">--color-text-mid</div><div class="token-value">#8E8E93</div><div class="token-desc">弱化信息</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#FFFFFF;box-shadow:0 0 0 1px rgba(0,0,0,.12)"></div><div class="token-info"><div class="token-name">--color-text-on-primary</div><div class="token-value">#FFFFFF</div><div class="token-desc">主色背景上的文字</div></div></div>
+        </div>
+      </div>
+
+      <div class="section-title">颜色 · 品牌 / 交互色</div>
+      <div class="soft-card">
+        <div class="token-grid">
+          <div class="token-item"><div class="token-swatch" style="background:#5A3DD8"></div><div class="token-info"><div class="token-name">--color-primary-deep</div><div class="token-value">#5A3DD8</div><div class="token-desc">badge 文字</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#7C5CFC"></div><div class="token-info"><div class="token-name">--color-primary</div><div class="token-value">#7C5CFC</div><div class="token-desc">激活态实底 / 主题色</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#EDE8FF"></div><div class="token-info"><div class="token-name">--color-primary-soft</div><div class="token-value">#EDE8FF</div><div class="token-desc">badge 背景</div></div></div>
+          <div class="token-item"><div class="token-swatch" style="background:#3C3C43"></div><div class="token-info"><div class="token-name">--color-action</div><div class="token-value">#3C3C43</div><div class="token-desc">卡片主按钮</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Typography ── -->
+    <section class="section" id="section-typography">
+      <div class="section-title">Typography · 字阶系统</div>
+      <div class="soft-card">
+        <div class="type-row">
+          <div class="type-sample" style="font-size:19px;font-weight:700;font-family:var(--font-display);color:var(--color-text-ink)">Logo Title — Oculis</div>
+          <div class="type-meta">SF Pro · 19px · 700<br>--type-logo-title</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample" style="font-size:18px;font-weight:510;font-family:var(--font-display);line-height:21px;color:var(--color-text-primary)">Headline — 课程标题文字</div>
+          <div class="type-meta">SF Pro · 18px / 21 · 510<br>--type-headline</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample" style="font-size:15px;font-weight:500;font-family:var(--font-display);color:var(--color-text-body)">Nav — Dashboard</div>
+          <div class="type-meta">SF Pro · 15px / 44 · 500<br>--type-nav</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample" style="font-size:15px;font-weight:600;font-family:var(--font-display);color:var(--color-primary)">Nav Active — Dashboard</div>
+          <div class="type-meta">SF Pro · 15px / 44 · 600<br>--type-nav-active</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample" style="font-size:14px;font-weight:400;font-family:var(--font-mono);line-height:18px;color:var(--color-text-secondary)">Body — 进入社群后需要做些什么，了解课程内容</div>
+          <div class="type-meta">Source Code Pro · 14px / 18 · 400<br>--type-body</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample" style="font-size:12px;font-weight:400;font-family:var(--font-mono);line-height:15px;color:var(--color-text-tag)">Label — Tag 1 · 参看课程</div>
+          <div class="type-meta">Source Code Pro · 12px / 15 · 400<br>--type-label</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample" style="font-size:12px;font-weight:400;font-family:var(--font-mono);color:var(--color-text-mid)">Subtitle — hello@novawrk.com</div>
+          <div class="type-meta">Source Code Pro · 12px · 400<br>--type-subtitle</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample" style="font-size:11px;font-weight:400;font-family:var(--font-mono);color:var(--color-primary-deep)">Badge — 10 · ⌘K</div>
+          <div class="type-meta">Source Code Pro · 11px · 400<br>--type-badge</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Navigation Spec ── -->
+    <section class="section" id="section-nav-spec">
+      <div class="section-title">Navigation · 导航栏规范</div>
+
+      <div style="margin-bottom:24px">
+        <div style="font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:16px">导航项状态演示</div>
+        <div class="nav-state-row">
+          <div class="demo-nav-item state-default">
+            <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" width="17" height="17"><rect x="2" y="2" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="2" width="5.5" height="5.5" rx="1.5"/><rect x="2" y="9.5" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1.5"/></svg>
+            Default
+          </div>
+          <div class="demo-nav-item state-active">
+            <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" width="17" height="17"><rect x="2" y="2" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="2" width="5.5" height="5.5" rx="1.5"/><rect x="2" y="9.5" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1.5"/></svg>
+            Active
+          </div>
+          <div class="demo-nav-item state-hover">
+            <svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" width="17" height="17"><rect x="2" y="2" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="2" width="5.5" height="5.5" rx="1.5"/><rect x="2" y="9.5" width="5.5" height="5.5" rx="1.5"/><rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1.5"/></svg>
+            Hover
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-spec-grid">
+        <div class="spec-block">
+          <h4>侧栏 Sidebar</h4>
+          <table class="spec-table">
+            <tr><td>宽度</td><td>248px</td></tr>
+            <tr><td>背景</td><td>#F2F2F3</td></tr>
+            <tr><td>模糊</td><td>backdrop-filter: blur(2px)</td></tr>
+            <tr><td>右侧边框</td><td>rgba(99,99,99,.14) 1px</td></tr>
+            <tr><td>内边距</td><td>24px 16px</td></tr>
+            <tr><td>圆角</td><td>无（全出血）</td></tr>
+          </table>
+        </div>
+        <div class="spec-block">
+          <h4>导航项 Nav Item</h4>
+          <table class="spec-table">
+            <tr><td>行高</td><td>44px</td></tr>
+            <tr><td>圆角</td><td>10px</td></tr>
+            <tr><td>图标</td><td>17px outline</td></tr>
+            <tr><td>字号 / 字重</td><td>15px / 500（默）· 600（激活）</td></tr>
+            <tr><td>激活背景</td><td>#7C5CFC</td></tr>
+            <tr><td>Hover 背景</td><td>rgba(32,21,21,.06)</td></tr>
+          </table>
+        </div>
+        <div class="spec-block">
+          <h4>搜索框 Search</h4>
+          <table class="spec-table">
+            <tr><td>高度</td><td>36px</td></tr>
+            <tr><td>圆角</td><td>10px</td></tr>
+            <tr><td>背景</td><td>rgba(32,21,21,.07)</td></tr>
+            <tr><td>kbd 背景</td><td>rgba(32,21,21,.12)</td></tr>
+            <tr><td>kbd 字体</td><td>11px monospace</td></tr>
+          </table>
+        </div>
+        <div class="spec-block">
+          <h4>Logo Header</h4>
+          <table class="spec-table">
+            <tr><td>logo-mark 尺寸</td><td>40 × 40px</td></tr>
+            <tr><td>logo-mark 圆角</td><td>9999px（圆形）</td></tr>
+            <tr><td>logo-mark 背景</td><td>#1A1A1C</td></tr>
+            <tr><td>产品名字号</td><td>19px / 700</td></tr>
+            <tr><td>副标题字号</td><td>12px · #8E8E93</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Card Component ── -->
+    <section class="section" id="section-card">
+      <div class="section-title">Card Component · 卡片组件</div>
+      <div class="component-preview">
+
+        <!-- Live Card -->
+        <div class="card">
+          <div class="card__image">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="4" y="10" width="40" height="28" rx="3" stroke="#999" stroke-width="1.5"/><path d="M4 32 L16 22 L26 30 L34 22 L44 32" stroke="#999" stroke-width="1.5"/><circle cx="16" cy="19" r="3" stroke="#999" stroke-width="1.5"/></svg>
+          </div>
+          <div class="card__tags">
+            <div class="card__tag">Tag 1</div>
+            <div class="card__tag">Tag 2</div>
+            <div class="card__tag">Tag 3</div>
+            <div class="card__tag">Tag 4</div>
+          </div>
+          <div class="card__content">
+            <div class="card__headline">Headline</div>
+            <div class="card__stats">
+              <div class="card__stat-item">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="6" r="3.5"/><path d="M2.5 16c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/></svg>
+                200
+              </div>
+              <div class="card__stat-item">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 10c2-5 4.5-7 8-7s6 2 8 7c-2 5-4.5 7-8 7s-6-2-8-7z"/><circle cx="10" cy="10" r="2.5"/></svg>
+                100000
+              </div>
+            </div>
+            <div class="card__description">进入社群后需要做些什么，社群课程内容如何学习，福利、权益如何领取</div>
+            <div class="card__button">参看课程</div>
+          </div>
+        </div>
+
+        <!-- Annotation -->
+        <div class="annotation">
+          <div style="font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:16px">结构标注</div>
+          <div class="annotation-row"><div class="annotation-dot"></div><div><strong>Card</strong> 314 × 426px · radius <code>12px</code> · bg <code>#FAFAFB</code><br>描边：inside 0.5px · <code>rgba(99,99,99,.14)</code></div></div>
+          <div class="annotation-row"><div class="annotation-dot" style="background:var(--color-canvas-image)"></div><div><strong>Hero Image</strong> 高 222px · 占位 <code>#DEDEDE</code></div></div>
+          <div class="annotation-row"><div class="annotation-dot" style="background:#3C3C43"></div><div><strong>Tags</strong> absolute · left 24 / top 179 · gap <code>8px</code><br>单 tag：60 × 31 · radius <code>100px</code> · bg white</div></div>
+          <div class="annotation-row"><div class="annotation-dot" style="background:var(--color-text-primary)"></div><div><strong>Headline</strong> SF Pro 18px / 510 · <code>#000000</code></div></div>
+          <div class="annotation-row"><div class="annotation-dot" style="background:var(--color-text-secondary)"></div><div><strong>Stats</strong> icon 18px + Source Code Pro 14px · gap <code>4px</code></div></div>
+          <div class="annotation-row"><div class="annotation-dot" style="background:var(--color-text-tertiary)"></div><div><strong>Description</strong> 14px / 18 · <code>#666666</code> · 2行截断</div></div>
+          <div class="annotation-row"><div class="annotation-dot" style="background:var(--color-action)"></div><div><strong>CTA Button</strong> 80 × 31 · radius <code>12px</code> · bg <code>#3C3C43</code></div></div>
+
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--color-border-soft)">
+            <div style="font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:12px">尺寸规范</div>
+            <table class="spec-table" style="font-size:11px">
+              <tr><td>card</td><td>314 × 426px</td></tr>
+              <tr><td>card 描边</td><td>inside 0.5px · rgba(99,99,99,.14)</td></tr>
+              <tr><td>hero image</td><td>314 × 222px</td></tr>
+              <tr><td>content padding</td><td>24px</td></tr>
+              <tr><td>content gap</td><td>16px</td></tr>
+              <tr><td>tag</td><td>60 × 31px · pad 8px 12px</td></tr>
+              <tr><td>button</td><td>80 × 31px · pad 8px 16px</td></tr>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Nav active state switching
+    const navItems = document.querySelectorAll('.nav-item[data-section]');
+    const sections = {
+      tokens:    document.getElementById('section-tokens'),
+      typography:document.getElementById('section-typography'),
+      'nav-spec':document.getElementById('section-nav-spec'),
+      card:      document.getElementById('section-card'),
+    };
+
+    navItems.forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        const target = sections[item.dataset.section];
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Highlight active nav on scroll
+    const panel = document.getElementById('main-panel');
+    const sectionIds = ['tokens', 'typography', 'nav-spec', 'card'];
+    panel.addEventListener('scroll', () => {
+      let current = sectionIds[0];
+      sectionIds.forEach(id => {
+        const el = sections[id];
+        if (el && el.getBoundingClientRect().top - panel.getBoundingClientRect().top < 80) current = id;
+      });
+      navItems.forEach(n => {
+        n.classList.toggle('active', n.dataset.section === current);
+      });
+    });
+  </script>
+</body>
+</html>

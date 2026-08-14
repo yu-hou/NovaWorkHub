@@ -35,32 +35,32 @@ function WorkbenchPreview({ isLight }: { isLight: boolean }) {
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border shadow-[0_30px_80px_rgba(12,18,32,0.12)]",
+        "relative mx-auto w-full max-w-3xl overflow-hidden rounded-[6px_0_0_6px] border shadow-none",
         isLight
-          ? "border-slate-200 bg-white"
-          : "border-white/10 bg-[#0a121e] shadow-[0_30px_80px_rgba(0,0,0,0.45)]",
+          ? "border-[#e8e8e8] bg-white"
+          : "border-white/10 bg-[#1f1a17]",
       )}
     >
       <BorderBeam
         size={180}
         duration={8}
-        colorFrom={isLight ? "#0f8f88" : "#2dd4bf"}
-        colorTo={isLight ? "#0284c7" : "#38bdf8"}
+        colorFrom={isLight ? "#ff682c" : "#ff8a58"}
+        colorTo={isLight ? "#816729" : "#b5974a"}
         borderWidth={1.5}
       />
       <div
         className={cn(
           "flex items-center gap-2 border-b px-4 py-3",
-          isLight ? "border-slate-200" : "border-white/10",
+          isLight ? "border-[#e8e8e8]" : "border-white/10",
         )}
       >
-        <span className="size-2.5 rounded-full bg-[#ef7b67]" />
-        <span className="size-2.5 rounded-full bg-[#e0a35a]" />
-        <span className="size-2.5 rounded-full bg-[#4fbf8f]" />
+        <span className="size-2.5 rounded-full bg-[#ff682c]" />
+        <span className="size-2.5 rounded-full bg-[#816729]" />
+        <span className="size-2.5 rounded-full bg-[#4d4d4d]" />
         <span
           className={cn(
             "ml-3 font-mono text-[11px] tracking-wider",
-            isLight ? "text-slate-400" : "text-white/40",
+            isLight ? "text-[#828282]" : "text-white/40",
           )}
         >
           nova://workbench
@@ -70,18 +70,18 @@ function WorkbenchPreview({ isLight }: { isLight: boolean }) {
         <div
           className={cn(
             "flex flex-col gap-2.5 border-r p-3",
-            isLight ? "border-slate-200" : "border-white/10",
+            isLight ? "border-[#e8e8e8]" : "border-white/10",
           )}
         >
           {[true, false, false, false].map((on, i) => (
             <span
               key={i}
               className={cn(
-                "size-7 rounded-lg",
+                "size-7 rounded-[4px_0_0_4px]",
                 on
-                  ? "bg-teal-500"
+                  ? "bg-[#202020]"
                   : isLight
-                    ? "bg-slate-100"
+                    ? "bg-[#f5f5f5]"
                     : "bg-white/10",
               )}
             />
@@ -94,24 +94,24 @@ function WorkbenchPreview({ isLight }: { isLight: boolean }) {
             <div
               key={panel.code}
               className={cn(
-                "rounded-xl border p-4",
+                "rounded-[6px_0_0_6px] border p-4",
                 isLight
-                  ? "border-slate-200 bg-slate-50"
+                  ? "border-[#e8e8e8] bg-[#f5f5f5]"
                   : "border-white/10 bg-white/5",
               )}
             >
               <p
                 className={cn(
                   "font-mono text-[11px] tracking-[0.14em]",
-                  isLight ? "text-teal-700" : "text-teal-300",
+                  isLight ? "text-[#816729]" : "text-[#ff8a58]",
                 )}
               >
                 {panel.code}
               </p>
               <p
                 className={cn(
-                  "mt-2 font-[family-name:var(--font-nova-display)] text-base font-semibold tracking-tight",
-                  isLight ? "text-slate-900" : "text-white",
+                  "mt-2 font-[family-name:var(--font-nova-display)] text-base font-normal tracking-[-0.02em]",
+                  isLight ? "text-[#202020]" : "text-white",
                 )}
               >
                 {panel.title}
@@ -119,7 +119,7 @@ function WorkbenchPreview({ isLight }: { isLight: boolean }) {
               <p
                 className={cn(
                   "mt-1 text-xs",
-                  isLight ? "text-slate-500" : "text-white/45",
+                  isLight ? "text-[#4d4d4d]" : "text-white/45",
                 )}
               >
                 {panel.tip}
@@ -137,17 +137,18 @@ export function LandingPage() {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const isLight = theme === "light";
-  const particleColor = isLight ? "#0f8f88" : "#2dd4bf";
+  const particleColor = isLight ? "#202020" : "#ff682c";
 
   useEffect(() => {
-    setMounted(true);
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   return (
     <div
       className={cn(
         "nova-landing relative min-h-dvh overflow-hidden transition-colors duration-300",
-        isLight ? "bg-[#eef3f6] text-slate-900" : "bg-[#05080f] text-white",
+        isLight ? "bg-white text-[#202020]" : "bg-[#151210] text-[#f4eee8]",
       )}
     >
       <div className="pointer-events-none absolute inset-0">
@@ -155,16 +156,16 @@ export function LandingPage() {
           className={cn(
             "absolute inset-0",
             isLight
-              ? "bg-[radial-gradient(ellipse_at_top,rgba(15,143,136,0.14),transparent_55%)]"
-              : "bg-[radial-gradient(ellipse_at_top,rgba(45,212,191,0.18),transparent_55%)]",
+              ? "bg-[radial-gradient(ellipse_at_top,rgba(255,104,44,0.10),transparent_55%)]"
+              : "bg-[radial-gradient(ellipse_at_top,rgba(255,104,44,0.12),transparent_55%)]",
           )}
         />
         <div
           className={cn(
             "absolute inset-0",
             isLight
-              ? "bg-[radial-gradient(ellipse_at_bottom_right,rgba(2,132,199,0.1),transparent_45%)]"
-              : "bg-[radial-gradient(ellipse_at_bottom_right,rgba(56,189,248,0.12),transparent_45%)]",
+              ? "bg-[radial-gradient(ellipse_at_bottom_right,rgba(129,103,41,0.08),transparent_45%)]"
+              : "bg-[radial-gradient(ellipse_at_bottom_right,rgba(129,103,41,0.10),transparent_45%)]",
           )}
         />
         {mounted ? (
@@ -187,22 +188,22 @@ export function LandingPage() {
           <div className="flex items-center gap-3">
             <span
               className={cn(
-                "grid size-9 place-items-center rounded-lg font-[family-name:var(--font-nova-display)] text-sm font-extrabold tracking-tight",
+                "grid size-9 place-items-center rounded-[4px_0_0_4px] font-[family-name:var(--font-nova-display)] text-sm font-normal tracking-[-0.02em]",
                 isLight
-                  ? "bg-slate-900 text-teal-300"
-                  : "bg-teal-400 text-[#04110f]",
+                  ? "bg-[#202020] text-[#ffffff]"
+                  : "bg-[#f4eee8] text-[#151210]",
               )}
             >
               N
             </span>
             <div className="leading-tight">
-              <p className="font-[family-name:var(--font-nova-display)] text-lg font-bold tracking-tight">
+              <p className="font-[family-name:var(--font-nova-display)] text-lg font-normal tracking-[-0.02em]">
                 Nova
               </p>
               <p
                 className={cn(
                   "text-[11px] font-medium uppercase tracking-[0.16em]",
-                  isLight ? "text-teal-700/80" : "text-teal-300/80",
+                  isLight ? "text-[#816729]" : "text-[#ff8a58]/80",
                 )}
               >
                 Workbench
@@ -222,15 +223,15 @@ export function LandingPage() {
               className={cn(
                 "mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1 backdrop-blur",
                 isLight
-                  ? "border-slate-200 bg-white/70"
+                  ? "border-[#e8e8e8] bg-white/80"
                   : "border-white/10 bg-white/5",
               )}
             >
-              <span className="size-1.5 rounded-full bg-teal-500 shadow-[0_0_12px_#2dd4bf]" />
+              <span className="size-1.5 rounded-full bg-[#ff682c] shadow-[0_0_12px_rgba(255,104,44,0.35)]" />
               <AnimatedGradientText
                 speed={1.2}
-                colorFrom={isLight ? "#0f766e" : "#2dd4bf"}
-                colorTo={isLight ? "#0369a1" : "#38bdf8"}
+                colorFrom={isLight ? "#202020" : "#f4eee8"}
+                colorTo={isLight ? "#816729" : "#ff8a58"}
                 className="text-xs font-medium tracking-wide"
               >
                 Nova 工作台 · AI 实战桌面
@@ -239,15 +240,15 @@ export function LandingPage() {
           </BlurFade>
 
           <BlurFade delay={0.22}>
-            <h1 className="font-[family-name:var(--font-nova-display)] text-5xl font-extrabold tracking-[-0.06em] text-balance sm:text-6xl md:text-7xl">
+            <h1 className="font-[family-name:var(--font-nova-display)] text-5xl font-normal tracking-[-0.02em] text-balance sm:text-6xl md:text-7xl">
               <SparklesText
                 className={cn(
                   "inline-block",
-                  isLight ? "text-slate-900" : "text-white",
+                  isLight ? "text-[#202020]" : "text-white",
                 )}
                 colors={{
-                  first: isLight ? "#0f8f88" : "#2dd4bf",
-                  second: isLight ? "#0284c7" : "#38bdf8",
+                  first: isLight ? "#ff682c" : "#ff8a58",
+                  second: isLight ? "#816729" : "#b5974a",
                 }}
                 sparklesCount={8}
               >
@@ -256,7 +257,7 @@ export function LandingPage() {
               <span
                 className={cn(
                   "mt-2 block",
-                  isLight ? "text-slate-700" : "text-white/90",
+                  isLight ? "text-[#4d4d4d]" : "text-white/90",
                 )}
               >
                 工作台
@@ -268,7 +269,7 @@ export function LandingPage() {
             <p
               className={cn(
                 "mx-auto mt-5 max-w-xl text-base leading-relaxed text-pretty sm:text-lg",
-                isLight ? "text-slate-600" : "text-white/60",
+                isLight ? "text-[#4d4d4d]" : "text-white/60",
               )}
             >
               把课程、路径与案例收成一张可开工的桌面。进入工作台，按任务打开，用 Agent
@@ -286,18 +287,16 @@ export function LandingPage() {
               />
               <ShimmerButton
                 className={cn(
-                  "relative z-10 h-14 px-8 text-base font-semibold",
-                  isLight
-                    ? "shadow-[0_0_36px_rgba(15,143,136,0.22)]"
-                    : "shadow-[0_0_40px_rgba(45,212,191,0.25)]",
+                  "relative z-10 h-14 px-8 text-base font-normal tracking-[-0.02em]",
+                  "text-white",
                 )}
                 background={
                   isLight
-                    ? "linear-gradient(135deg, #0f8f88, #0c1220)"
-                    : "linear-gradient(135deg, #0f8f88, #0c1220)"
+                    ? "linear-gradient(135deg, #202020, #202020)"
+                    : "linear-gradient(135deg, #202020, #202020)"
                 }
-                shimmerColor="#5eead4"
-                borderRadius="14px"
+                shimmerColor="#ff682c"
+                borderRadius="0px"
                 onClick={() => router.push(WORKBENCH_HREF)}
               >
                 <span className="flex items-center gap-2">
@@ -318,13 +317,13 @@ export function LandingPage() {
             <div
               className={cn(
                 "pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-linear-to-r to-transparent",
-                isLight ? "from-[#eef3f6]" : "from-[#05080f]",
+                isLight ? "from-white" : "from-[#151210]",
               )}
             />
             <div
               className={cn(
                 "pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-linear-to-l to-transparent",
-                isLight ? "from-[#eef3f6]" : "from-[#05080f]",
+                isLight ? "from-white" : "from-[#151210]",
               )}
             />
             <Marquee pauseOnHover className="[--duration:28s] [--gap:2rem]">
@@ -334,7 +333,7 @@ export function LandingPage() {
                   className={cn(
                     "rounded-full border px-4 py-1.5 font-mono text-xs tracking-[0.14em] uppercase",
                     isLight
-                      ? "border-slate-200 bg-white/80 text-slate-500"
+                      ? "border-[#e8e8e8] bg-white/80 text-[#828282]"
                       : "border-white/10 bg-white/5 text-white/55",
                   )}
                 >

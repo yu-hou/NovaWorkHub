@@ -14,6 +14,7 @@ export type PlatformCard = {
   title: string;
   category?: string | null;
   categoryClass?: string | null;
+  tags?: string[] | null;
   summary?: string | null;
   cover?: string | null;
   learners?: string | null;

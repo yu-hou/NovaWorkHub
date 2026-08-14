@@ -91,7 +91,7 @@ interface SparklesTextProps {
 
 export const SparklesText: React.FC<SparklesTextProps> = ({
   children,
-  colors = { first: "#9E7AFF", second: "#FE8BBB" },
+  colors = { first: "#ff682c", second: "#816729" },
   className,
   sparklesCount = 10,
   ...props
@@ -135,7 +135,7 @@ export const SparklesText: React.FC<SparklesTextProps> = ({
 
   return (
     <div
-      className={cn("text-6xl font-bold", className)}
+      className={cn("text-6xl font-normal", className)}
       {...props}
       style={
         {

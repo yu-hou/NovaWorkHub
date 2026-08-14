@@ -7,13 +7,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Avenir Next", "Segoe UI", -apple-system, BlinkMacSystemFont,
+  --font-sans: "Inter", "Avenir Next", -apple-system, BlinkMacSystemFont,
     "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
   --font-mono: "SFMono-Regular", ui-monospace, "JetBrains Mono",
     Consolas, monospace;
-  --font-heading: var(--font-sans);
-  --font-nova-display: "Syne", "Avenir Next", "PingFang SC", "Microsoft YaHei",
-    sans-serif;
+  --font-heading: "Inter Tight", var(--font-sans);
+  --font-nova-display: "Inter Tight", var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -121,72 +120,82 @@
 }
 
 :root {
-  --background: #f5f7f9;
-  --foreground: #15202b;
+  --color-graphite: #202020;
+  --color-canvas-white: #ffffff;
+  --color-ash: #efefef;
+  --color-fog: #f5f5f5;
+  --color-ivory: #ebe6dd;
+  --color-steel: #4d4d4d;
+  --color-slate: #828282;
+  --color-mist: #e8e8e8;
+  --color-ember-orange: #ff682c;
+  --color-brass: #816729;
+  --background: var(--color-canvas-white);
+  --foreground: var(--color-graphite);
   --card: #ffffff;
-  --card-foreground: #15202b;
+  --card-foreground: var(--color-graphite);
   --popover: #ffffff;
-  --popover-foreground: #15202b;
-  --primary: #0f3d3e;
+  --popover-foreground: var(--color-graphite);
+  --primary: var(--color-graphite);
   --primary-foreground: #ffffff;
-  --secondary: #f5f7f9;
-  --secondary-foreground: #15202b;
-  --muted: #eef1f5;
-  --muted-foreground: #5f6b7a;
-  --accent: #e6f7f5;
-  --accent-foreground: #15202b;
+  --secondary: var(--color-ash);
+  --secondary-foreground: var(--color-graphite);
+  --muted: var(--color-fog);
+  --muted-foreground: var(--color-slate);
+  --accent: var(--color-ash);
+  --accent-foreground: var(--color-graphite);
   --destructive: #b42318;
-  --border: #e4e9ef;
-  --input: #d5dbe3;
-  --ring: #0d9488;
-  --chart-1: #22d3ee;
-  --chart-2: #38bdf8;
-  --chart-3: #2dd4bf;
-  --chart-4: #5eead4;
-  --chart-5: #99f6e4;
-  --radius: 0.875rem;
-  --sidebar: rgba(255, 255, 255, 0.85);
-  --sidebar-foreground: #15202b;
-  --sidebar-primary: #0f3d3e;
+  --border: var(--color-mist);
+  --input: #d8d5cf;
+  --ring: var(--color-ember-orange);
+  --chart-1: var(--color-ember-orange);
+  --chart-2: var(--color-brass);
+  --chart-3: var(--color-steel);
+  --chart-4: var(--color-slate);
+  --chart-5: var(--color-mist);
+  --radius: 0.5rem;
+  --sidebar: rgba(239, 239, 239, 0.82);
+  --sidebar-foreground: var(--color-graphite);
+  --sidebar-primary: var(--color-graphite);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5f7f9;
-  --sidebar-accent-foreground: #15202b;
-  --sidebar-border: #e4e9ef;
-  --sidebar-ring: #0d9488;
+  --sidebar-accent: var(--color-ash);
+  --sidebar-accent-foreground: var(--color-graphite);
+  --sidebar-border: var(--color-mist);
+  --sidebar-ring: var(--color-ember-orange);
 }
 
 .dark {
-  --background: #0c1117;
-  --foreground: #e8eef4;
-  --card: #151b24;
-  --card-foreground: #e8eef4;
-  --popover: #151b24;
-  --popover-foreground: #e8eef4;
-  --primary: #14b8a6;
-  --primary-foreground: #042f2e;
-  --secondary: #121820;
-  --secondary-foreground: #e8eef4;
-  --muted: #1a2330;
-  --muted-foreground: #8b97a8;
-  --accent: rgba(45, 212, 191, 0.14);
-  --accent-foreground: #e8eef4;
-  --destructive: #f07178;
-  --border: #243041;
-  --input: #2e3d52;
-  --ring: #2dd4bf;
-  --chart-1: #67e8f9;
-  --chart-2: #7dd3fc;
-  --chart-3: #5eead4;
-  --chart-4: #99f6e4;
-  --chart-5: #ccfbf1;
-  --sidebar: rgba(12, 17, 23, 0.88);
-  --sidebar-foreground: #e8eef4;
-  --sidebar-primary: #14b8a6;
-  --sidebar-primary-foreground: #042f2e;
-  --sidebar-accent: #121820;
-  --sidebar-accent-foreground: #e8eef4;
-  --sidebar-border: #243041;
-  --sidebar-ring: #2dd4bf;
+  --background: #151210;
+  --foreground: #f4eee8;
+  --card: #1f1a17;
+  --card-foreground: #f4eee8;
+  --popover: #1f1a17;
+  --popover-foreground: #f4eee8;
+  --primary: #f4eee8;
+  --primary-foreground: #151210;
+  --secondary: #29231f;
+  --secondary-foreground: #f4eee8;
+  --muted: #231e1a;
+  --muted-foreground: #a69b93;
+  --accent: #29231f;
+  --accent-foreground: #f4eee8;
+  --destructive: #ff8a75;
+  --border: rgba(244, 238, 232, 0.14);
+  --input: rgba(244, 238, 232, 0.2);
+  --ring: #ff682c;
+  --chart-1: #ff682c;
+  --chart-2: #b5974a;
+  --chart-3: #d2c7bc;
+  --chart-4: #a69b93;
+  --chart-5: #3a312c;
+  --sidebar: rgba(31, 26, 23, 0.88);
+  --sidebar-foreground: #f4eee8;
+  --sidebar-primary: #f4eee8;
+  --sidebar-primary-foreground: #151210;
+  --sidebar-accent: #29231f;
+  --sidebar-accent-foreground: #f4eee8;
+  --sidebar-border: rgba(244, 238, 232, 0.14);
+  --sidebar-ring: #ff682c;
 }
 
 @layer base {
@@ -204,9 +213,9 @@
   min-height: 40px;
   width: 40px;
   padding: 0;
-  border-radius: 999px;
+  border-radius: 200px;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--card) 82%, transparent);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
   color: var(--foreground);
   display: inline-flex;
   align-items: center;
@@ -222,8 +231,8 @@
 
 .theme-toggle:hover {
   background: var(--accent);
-  border-color: color-mix(in srgb, var(--ring) 45%, var(--border));
-  color: var(--ring);
+  border-color: color-mix(in srgb, var(--ring) 55%, var(--border));
+  color: var(--color-ember-orange, var(--ring));
   transform: translateY(-1px);
 }
 
