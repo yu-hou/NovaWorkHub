@@ -17,7 +17,8 @@ export type FrontDesignPage =
   | "events"
   | "replays"
   | "benefits"
-  | "about";
+  | "about"
+  | "token";
 
 type FrontDesignShellProps = {
   page: FrontDesignPage;

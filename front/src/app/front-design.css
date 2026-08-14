@@ -75,6 +75,117 @@ body.front-design-app {
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
 
+/* ----- Token Rank ----- */
+.nwh-token-rank-view {
+    width: min(100%, 1160px);
+    display: grid;
+    gap: 18px;
+}
+.token-rank-hero-card,
+.token-rank-board-card,
+.token-rank-side-card,
+.token-rank-metric-grid article {
+    border: 1px solid var(--border);
+    background: var(--canvas);
+}
+.token-rank-hero-card {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(24px, 4vw, 40px);
+    border-radius: var(--radius-card);
+}
+.token-rank-eyebrow {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--body-mid);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+}
+.token-rank-hero-card h1 {
+    max-width: 700px;
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.06;
+    letter-spacing: -.045em;
+}
+.token-rank-hero-card p {
+    max-width: 620px;
+    margin-top: 12px;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.7;
+}
+.token-rank-hero-actions,
+.token-rank-dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.token-rank-hero-actions .btn-primary {
+    gap: 8px;
+}
+.token-rank-hero-actions svg,
+.token-rank-notice svg,
+.token-rank-device svg,
+.token-rank-privacy svg,
+.token-rank-empty svg,
+.token-rank-copy-field svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+}
+.token-rank-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(129, 103, 41, .36);
+    border-radius: var(--radius-input);
+    background: var(--success-soft);
+    color: var(--ink);
+    font-size: 14px;
+}
+.token-rank-notice.is-error { border-color: rgba(180, 35, 24, .35); background: #fff1ef; color: #8f2017; }
+.token-rank-notice button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: inherit; font-weight: 650; }
+.token-rank-metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.token-rank-metric-grid article { min-height: 136px; padding: 20px; border-radius: var(--radius-card); display: grid; align-content: space-between; gap: 7px; }
+.token-rank-metric-grid span,
+.token-rank-metric-grid small { color: var(--body-mid); font-size: 12px; line-height: 1.4; }
+.token-rank-metric-grid strong { font-size: clamp(26px, 3vw, 38px); letter-spacing: -.045em; line-height: 1; }
+.token-rank-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 14px; align-items: start; }
+.token-rank-board-card,
+.token-rank-side-card { border-radius: var(--radius-card); padding: 20px; }
+.token-rank-section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--border-soft); }
+.token-rank-section-heading h2 { font-size: 18px; letter-spacing: -.025em; }
+.token-rank-section-heading p { margin-top: 5px; color: var(--body-mid); font-size: 12px; line-height: 1.5; }
+.token-rank-range { display: inline-flex; padding: 3px; border-radius: 7px; background: var(--canvas-soft); }
+.token-rank-range button { min-height: 28px; padding: 0 9px; border: 0; border-radius: 5px; background: transparent; color: var(--ink-soft); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.token-rank-range button.active { background: var(--canvas); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.09); }
+.token-rank-list { display: grid; }
+.token-rank-entry { display: grid; grid-template-columns: 28px 36px minmax(0, 1fr) minmax(120px, .8fr) auto; align-items: center; gap: 10px; min-height: 70px; border-bottom: 1px solid var(--border-soft); }
+.token-rank-entry:last-child { border-bottom: 0; }
+.token-rank-place { display: grid; place-items: center; width: 26px; height: 26px; color: var(--body-mid); font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+.token-rank-place.top-1 { background: #202020; color: #fff; }.token-rank-place.top-2 { background: #5d5d60; color: #fff; }.token-rank-place.top-3 { background: #8e8e93; color: #fff; }
+.token-rank-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--canvas-soft); color: var(--ink); font-size: 13px; font-weight: 700; }
+.token-rank-entry-user { display: grid; min-width: 0; gap: 3px; }.token-rank-entry-user strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }.token-rank-entry-user small { overflow: hidden; color: var(--body-mid); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.token-rank-entry-tools { display: flex; flex-wrap: wrap; gap: 5px; }.token-rank-entry-tools span { padding: 3px 5px; border: 1px solid var(--border-soft); border-radius: 4px; color: var(--ink-soft); font-family: var(--font-mono); font-size: 10px; white-space: nowrap; }.token-rank-entry-score { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+.token-rank-empty { display: grid; justify-items: start; gap: 6px; padding: 52px 14px; color: var(--ink-soft); text-align: left; }.token-rank-empty svg { color: var(--body-mid); }.token-rank-empty strong { font-size: 14px; }.token-rank-empty p { margin: 0; color: var(--body-mid); font-size: 13px; }
+.token-rank-side-card { display: grid; gap: 16px; }.token-rank-device { display: flex; align-items: center; gap: 10px; padding-bottom: 15px; border-bottom: 1px solid var(--border-soft); }.token-rank-device svg { color: var(--body-mid); }.token-rank-device div { display: grid; min-width: 0; flex: 1; gap: 3px; }.token-rank-device strong { font-size: 13px; }.token-rank-device small,.token-rank-device-empty { color: var(--body-mid); font-size: 12px; }.token-rank-device button { border: 0; background: transparent; color: var(--body-mid); font-size: 11px; font-weight: 600; }.token-rank-device button:hover { color: #8f2017; }.token-rank-device-empty { padding: 4px 0 12px; border-bottom: 1px solid var(--border-soft); }
+.token-rank-tool-summary { display: grid; gap: 8px; }.token-rank-tool-summary > span { color: var(--body-mid); font-size: 11px; font-weight: 650; }.token-rank-tool-summary > div { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }.token-rank-tool-summary b { font-weight: 600; }.token-rank-tool-summary small,.token-rank-tool-summary p { color: var(--body-mid); font-family: var(--font-mono); font-size: 11px; }.token-rank-tool-summary p { margin: 0; line-height: 1.6; }
+.token-rank-privacy { display: flex; gap: 9px; padding-top: 14px; border-top: 1px solid var(--border-soft); color: var(--body-mid); }.token-rank-privacy p { margin: 0; font-size: 12px; line-height: 1.6; }.token-rank-privacy svg { margin-top: 1px; }
+.token-rank-state { display: inline-flex; align-items: center; gap: 9px; min-height: 160px; color: var(--ink-soft); font-size: 14px; }.token-rank-state svg { width: 18px; height: 18px; animation: token-rank-spin .8s linear infinite; } @keyframes token-rank-spin { to { transform: rotate(360deg); } }
+.token-rank-login-card { display: grid; justify-items: start; align-content: center; min-height: min(520px, calc(100dvh - 220px)); }.token-rank-login-card .btn-primary { margin-top: 22px; }
+.token-rank-dialog-backdrop { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 20px; background: rgba(20,20,22,.34); }.token-rank-dialog { width: min(520px, 100%); max-height: calc(100dvh - 40px); overflow: auto; display: grid; gap: 15px; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--canvas); box-shadow: var(--shadow-pop); }.token-rank-dialog-head { display: flex; justify-content: space-between; gap: 18px; }.token-rank-dialog-head h2 { font-size: 21px; letter-spacing: -.03em; }.token-rank-dialog-head p { margin-top: 6px; color: var(--ink-soft); font-size: 13px; line-height: 1.6; }.token-rank-close { width: 30px; height: 30px; border: 0; border-radius: 6px; background: var(--canvas-soft); color: var(--ink); font-size: 24px; line-height: 1; }.token-rank-dialog label { display: grid; gap: 7px; color: var(--ink-soft); font-size: 13px; font-weight: 600; }.token-rank-dialog input:not([type="checkbox"]) { min-height: 42px; }.token-rank-check { grid-template-columns: 18px 1fr; align-items: center; }.token-rank-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }.token-rank-dialog-actions { justify-content: flex-end; padding-top: 5px; }.token-rank-dialog-actions button:disabled { opacity: .58; cursor: not-allowed; }
+.token-rank-copy-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-input); background: var(--canvas-soft); }.token-rank-copy-field span { grid-column: 1 / -1; color: var(--body-mid); font-size: 11px; font-weight: 650; }.token-rank-copy-field code { min-width: 0; overflow: hidden; font-family: var(--font-mono); font-size: 11px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }.token-rank-copy-field button { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 5px; background: var(--canvas); color: var(--ink); }.token-rank-credential-note { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
+.token-rank-command { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-input); background: var(--canvas-soft); }.token-rank-command > span { color: var(--body-mid); font-size: 11px; font-weight: 650; }.token-rank-command code { max-height: 132px; overflow: auto; padding: 10px; background: var(--canvas); color: var(--ink); font-family: var(--font-mono); font-size: 11px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }.token-rank-command .btn-outline { justify-self: start; min-height: 36px; gap: 7px; font-size: 12px; }
+.token-rank-downloads { display: grid; gap: 8px; }.token-rank-downloads > span { color: var(--body-mid); font-size: 12px; }.token-rank-downloads > div { display: flex; flex-wrap: wrap; gap: 7px; }.token-rank-downloads a { min-height: 30px; display: inline-flex; align-items: center; padding: 0 9px; border: 1px solid var(--border); border-radius: 5px; color: var(--ink); font-size: 12px; font-weight: 600; text-decoration: none; }.token-rank-downloads a:hover { background: var(--canvas-soft); }
+@media (max-width: 860px) { .token-rank-layout { grid-template-columns: 1fr; }.token-rank-side-card { grid-template-columns: 1fr 1fr; }.token-rank-side-card .token-rank-section-heading,.token-rank-side-card .token-rank-privacy { grid-column: 1 / -1; } }
+@media (max-width: 680px) { .token-rank-hero-card { align-items: flex-start; flex-direction: column; }.token-rank-metric-grid { grid-template-columns: 1fr; }.token-rank-metric-grid article { min-height: 104px; }.token-rank-entry { grid-template-columns: 28px 34px minmax(0, 1fr) auto; gap: 8px; }.token-rank-entry-tools { display: none; }.token-rank-side-card { grid-template-columns: 1fr; }.token-rank-section-heading { align-items: flex-start; flex-direction: column; }.token-rank-range { width: 100%; }.token-rank-range button { flex: 1; }.token-rank-hero-actions { width: 100%; }.token-rank-hero-actions .btn-primary,.token-rank-hero-actions .btn-outline { flex: 1; }.token-rank-dialog { padding: 20px; } }
+
 /* ----- 控件基础 ----- */
 button, .btn, input, select { font: inherit; }
 button { cursor: pointer; }
@@ -1522,3 +1633,13 @@ html.dark .front-design-root .token-rank-ring-panel,
 html.dark .front-design-root .token-rank-ring::after,
 html.dark .front-design-root .token-rank-metric-card,
 html.dark .front-design-root .token-rank-token-breakdown-item { background: var(--tr-panel); color: var(--tr-text); }
+
+/* Token Rank 新版与遗留页面类名隔离，避免历史样式回流。 */
+.nwh-token-rank-view .token-rank-metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.nwh-token-rank-view .token-rank-list { gap: 0; }
+.nwh-token-rank-view .token-rank-avatar { width: 34px; height: 34px; min-height: 34px; overflow: hidden; padding: 0; border: 0; background: var(--canvas-soft); color: var(--ink); cursor: default; font-size: 13px; font-weight: 700; }
+.nwh-token-rank-view .token-rank-avatar:hover { background: var(--canvas-soft); color: var(--ink); box-shadow: none; }
+.nwh-token-rank-view .token-rank-empty { min-height: 0; place-items: start; border: 0; border-radius: 0; background: transparent; }
+.nwh-token-rank-view .token-rank-close { width: 30px; height: 30px; min-height: 30px; padding: 0; border: 0; border-radius: 6px; background: var(--canvas-soft); color: var(--ink); box-shadow: none; font-size: 24px; }
+.nwh-token-rank-view .token-rank-close:hover { background: var(--canvas-soft); box-shadow: none; transform: none; }
+@media (max-width: 680px) { .nwh-token-rank-view .token-rank-metric-grid { grid-template-columns: 1fr; } }

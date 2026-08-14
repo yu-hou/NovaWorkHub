@@ -436,3 +436,15 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/feishu-doc-signature/deno.json"
 entrypoint = "./functions/feishu-doc-signature/index.ts"
+
+[functions.token-rank]
+enabled = true
+verify_jwt = true
+import_map = "./functions/token-rank/deno.json"
+entrypoint = "./functions/token-rank/index.ts"
+
+[functions.token-rank-upload]
+enabled = true
+verify_jwt = false
+import_map = "./functions/token-rank-upload/deno.json"
+entrypoint = "./functions/token-rank-upload/index.ts"
