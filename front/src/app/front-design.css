@@ -299,6 +299,10 @@ p { text-wrap: pretty; }
     opacity: 1; visibility: visible; transform: scale(1) translateY(0);
     transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
 }
+.account-popover.account-popover-floating {
+    position: fixed; right: auto; z-index: 100;
+    overflow-x: hidden; overflow-y: auto;
+}
 .login-card h2 { font-size: 16px; font-weight: 700; color: var(--ink); }
 .login-card .sub { color: var(--body); font-size: 13px; line-height: 1.5; margin: 6px 0 14px; }
 .form-grid { display: grid; gap: 10px; }
