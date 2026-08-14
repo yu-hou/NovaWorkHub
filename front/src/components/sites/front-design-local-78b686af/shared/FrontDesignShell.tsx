@@ -79,10 +79,10 @@ export default function FrontDesignShell({
         <div className={`app-shell${sidebarCollapsed ? " is-sidebar-collapsed" : ""}`}>
           <aside className="sidebar">
             <div className="sidebar-brand">
-              <Link className="sidebar-brand-link" href="/home">
-                <span className="brand-mark">AW</span>
+              <Link className="sidebar-brand-link" href="/home" aria-label="返回 NovaWorkHub 工作台">
+                <span className="brand-mark brand-mark-image" aria-hidden="true" />
                 <div className="sidebar-brand-copy">
-                  <span className="sidebar-brand-title">AgentWork</span>
+                  <span className="sidebar-brand-title">NovaWorkHub</span>
                   <span className="sidebar-brand-subtitle">让AI真正干活</span>
                 </div>
               </Link>

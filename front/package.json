@@ -11,7 +11,7 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "pages:preview": "wrangler pages dev out",
-    "pages:deploy": "npm run build && wrangler pages deploy out --project-name nova-academy",
+    "pages:deploy": "npm run build && wrangler pages deploy out --project-name nova-academy --branch main",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run build"

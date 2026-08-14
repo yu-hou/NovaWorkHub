@@ -181,6 +181,13 @@ p { text-wrap: pretty; }
     color: var(--on-primary); font-weight: 700; font-size: 13px;
     background: var(--ink);
 }
+.brand-mark-image {
+    background-color: #111;
+    background-image: url("/seo/favicon.ico");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 26px 26px;
+}
 /* display-xs 变体：侧栏词标 */
 .sidebar-brand-title { display: block; font-size: 19px; letter-spacing: 0; font-weight: 700; color: var(--ink); }
 .sidebar-brand-subtitle { display: block; color: var(--body-mid); font-size: 12px; }
