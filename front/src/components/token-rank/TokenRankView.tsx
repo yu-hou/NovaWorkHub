@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabase } from "@/lib/supabase";
 
 type Range = "today" | "week" | "month";
+type InstallOs = "mac" | "windows";
 
 type RankRow = {
   rank: number;
@@ -73,6 +74,8 @@ async function tokenRankCall<T>(body: Record<string, unknown>) {
 export default function TokenRankView() {
   const { loading: authLoading, isLoggedIn } = useAuth();
   const [range, setRange] = useState<Range>("week");
+  const [toolFilter, setToolFilter] = useState("all");
+  const [onlyMine, setOnlyMine] = useState(false);
   const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -83,6 +86,7 @@ export default function TokenRankView() {
   const [isPublic, setIsPublic] = useState(true);
   const [saving, setSaving] = useState(false);
   const [credential, setCredential] = useState<DeviceCredential | null>(null);
+  const [installOs, setInstallOs] = useState<InstallOs>("mac");
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async (nextRange = range) => {
@@ -122,8 +126,22 @@ export default function TokenRankView() {
     return Array.from(totals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
   }, [data?.leaderboard]);
 
-  const syncCommand = credential
-    ? `./novatoken preview --json | curl --fail-with-body --silent --show-error -X POST '${credential.upload_url}' -H 'Content-Type: application/json' -H 'X-Token-Rank-Device-Key: ${credential.device_key}' --data-binary @-`
+  const visibleLeaderboard = useMemo(() => (data?.leaderboard ?? []).map((entry) => {
+    const byTool = entry.by_tool ?? {};
+    const total = toolFilter === "all" ? entry.total_tokens : Number(byTool[toolFilter] ?? 0);
+    return { ...entry, total_tokens: total, by_tool: toolFilter === "all" ? byTool : { [toolFilter]: total } };
+  }).filter((entry) => entry.total_tokens > 0 && (!onlyMine || entry.handle === data?.member?.handle)), [data, onlyMine, toolFilter]);
+
+  const filteredTokens = useMemo(() => visibleLeaderboard.reduce((sum, entry) => sum + entry.total_tokens, 0), [visibleLeaderboard]);
+
+  const installCommand = credential
+    ? installOs === "mac"
+      ? `curl -fsSL https://nova-academy-8fk.pages.dev/install.sh | sh -s -- '${credential.device_key}'`
+      : `$env:NWH_TOKEN_RANK_DEVICE_KEY='${credential.device_key}'; irm https://nova-academy-8fk.pages.dev/install.ps1 | iex`
+    : "";
+
+  const aiPrompt = credential
+    ? `请帮我在这台${installOs === "mac" ? " macOS 或 Linux" : " Windows"}电脑接入 NovaWorkHub Token Rank。请在终端执行下面这条命令，等待首次扫描完成后告诉我是否上传成功。不要在回复中重复命令、设备信息或任何本地日志内容；不要读取、修改或删除无关文件。\n\n${installCommand}`
     : "";
 
   const saveSettings = async () => {
@@ -193,13 +211,16 @@ export default function TokenRankView() {
 
   return (
     <section className="view nwh-token-rank-view">
-      <div className="token-rank-hero-card">
-        <div>
-          <span className="token-rank-eyebrow">TOKEN RANK</span>
-          <h1>社群 AI 用量排行榜</h1>
-          <p>仅统计按日期、工具和模型汇总的 Token 数字，不上传对话、代码或文件。</p>
-        </div>
+      <div className="token-rank-control-card">
+        <div className="token-rank-control-title"><span className="token-rank-eyebrow">TOKEN RANK</span><strong>查看本机 AI 使用进度</strong><small>只展示按日期、工具和模型汇总的 Token 数字。</small></div>
+        <div className="token-rank-control-group"><span>统计周期</span><div className="token-rank-range" aria-label="统计周期">
+          {([ ["today", "今天"], ["week", "近 7 天"], ["month", "近 30 天"] ] as const).map(([value, label]) => (
+            <button key={value} type="button" className={range === value ? "active" : ""} onClick={() => setRange(value)}>{label}</button>
+          ))}
+        </div></div>
+        <div className="token-rank-control-group token-rank-tool-filter"><span>工具筛选</span><div className="token-rank-filter-buttons"><button type="button" className={toolFilter === "all" ? "active" : ""} onClick={() => setToolFilter("all")}>全部</button>{tools.map(([tool]) => <button key={tool} type="button" className={toolFilter === tool ? "active" : ""} onClick={() => setToolFilter(tool)}>{tool}</button>)}</div></div>
         <div className="token-rank-hero-actions">
+          <button className={`btn-outline token-rank-mine-toggle${onlyMine ? " active" : ""}`} type="button" onClick={() => setOnlyMine((value) => !value)}>仅看我的数据</button>
           <button className="btn-outline" type="button" onClick={() => setSettingsOpen(true)}>排行榜设置</button>
           <button className="btn-primary" type="button" onClick={() => { if (data?.member) void createDevice(); else setSettingsOpen(true); }}>
             <MonitorCog aria-hidden="true" />接入我的电脑
@@ -211,8 +232,8 @@ export default function TokenRankView() {
       {error ? <div className="token-rank-notice is-error" role="alert">{error}<button type="button" onClick={() => void load()}><RotateCcw aria-hidden="true" />重试</button></div> : null}
 
       <div className="token-rank-metric-grid">
-        <article><span>社群累计</span><strong>{formatTokens(data?.summary.total_tokens ?? 0)}</strong><small>{range === "today" ? "今天" : range === "month" ? "近 30 天" : "近 7 天"}总 Token</small></article>
-        <article><span>参与人数</span><strong>{data?.summary.participants ?? 0}</strong><small>已公开并参与排行</small></article>
+        <article><span>{toolFilter === "all" ? "社群累计" : `${toolFilter} 累计`}</span><strong>{formatTokens(filteredTokens)}</strong><small>{range === "today" ? "今天" : range === "month" ? "近 30 天" : "近 7 天"}筛选结果</small></article>
+        <article><span>参与人数</span><strong>{visibleLeaderboard.length}</strong><small>{onlyMine ? "当前仅查看自己" : "已公开并参与排行"}</small></article>
         <article><span>我的用量</span><strong>{formatTokens(data?.summary.own_tokens ?? 0)}</strong><small>{data?.summary.own_rank ? `当前第 ${data.summary.own_rank} 名` : "接入后自动统计"}</small></article>
       </div>
 
@@ -220,23 +241,19 @@ export default function TokenRankView() {
         <section className="token-rank-board-card">
           <div className="token-rank-section-heading">
             <div><h2>排行榜</h2><p>总量 = 输入 + 输出 + 缓存读取 + 缓存写入</p></div>
-            <div className="token-rank-range" aria-label="统计周期">
-              {([ ["today", "今天"], ["week", "近 7 天"], ["month", "近 30 天"] ] as const).map(([value, label]) => (
-                <button key={value} type="button" className={range === value ? "active" : ""} onClick={() => setRange(value)}>{label}</button>
-              ))}
-            </div>
+            <span className="token-rank-filter-caption">{toolFilter === "all" ? "全部工具" : toolFilter}{onlyMine ? " · 仅看我" : ""}</span>
           </div>
           <div className="token-rank-list" aria-live="polite">
-            {(data?.leaderboard ?? []).map((entry) => (
+            {visibleLeaderboard.map((entry, index) => (
               <article className="token-rank-entry" key={entry.user_id}>
-                <span className={`token-rank-place ${rankBadge(entry.rank)}`}>{entry.rank}</span>
+                <span className={`token-rank-place ${rankBadge(index + 1)}`}>{index + 1}</span>
                 <span className="token-rank-avatar">{entry.handle.slice(0, 1).toUpperCase()}</span>
                 <div className="token-rank-entry-user"><strong>{entry.handle}</strong><small>{entry.city || "Nova 社群成员"}</small></div>
                 <div className="token-rank-entry-tools">{Object.entries(entry.by_tool ?? {}).slice(0, 2).map(([tool, value]) => <span key={tool}>{tool} {formatTokens(Number(value))}</span>)}</div>
                 <strong className="token-rank-entry-score">{formatTokens(entry.total_tokens)}</strong>
               </article>
             ))}
-            {!data?.leaderboard.length ? <div className="token-rank-empty"><KeyRound aria-hidden="true" /><strong>排行榜等待第一位参与者</strong><p>保存昵称并接入电脑后，首次同步即可上榜。</p></div> : null}
+            {!visibleLeaderboard.length ? <div className="token-rank-empty"><KeyRound aria-hidden="true" /><strong>{data?.leaderboard.length ? "当前筛选没有结果" : "排行榜等待第一位参与者"}</strong><p>{data?.leaderboard.length ? "换一个工具或关闭“仅看我的数据”试试。" : "保存昵称并接入电脑后，首次同步即可上榜。"}</p></div> : null}
           </div>
         </section>
 
@@ -260,13 +277,12 @@ export default function TokenRankView() {
       </section></div> : null}
 
       {credential ? <div className="token-rank-dialog-backdrop" role="presentation"><section className="token-rank-dialog token-rank-credential-dialog" role="dialog" aria-modal="true" aria-labelledby="tokenRankCredentialTitle">
-        <div className="token-rank-dialog-head"><div><h2 id="tokenRankCredentialTitle">设备接入凭证已生成</h2><p>{credential.instructions}</p></div><button type="button" className="token-rank-close" onClick={() => setCredential(null)} aria-label="关闭">×</button></div>
-        <div className="token-rank-copy-field"><span>上传地址</span><code>{credential.upload_url}</code><button type="button" onClick={() => void copy(credential.upload_url, "上传地址已复制")} aria-label="复制上传地址"><Copy aria-hidden="true" /></button></div>
-        <div className="token-rank-copy-field"><span>设备密钥</span><code>{credential.device_key}</code><button type="button" onClick={() => void copy(credential.device_key, "设备密钥已复制")} aria-label="复制设备密钥"><Copy aria-hidden="true" /></button></div>
-        <div className="token-rank-downloads"><span>还没有 NovaToken 扫描器？先下载对应版本</span><div><a href="https://novatoken.novaislandai.workers.dev/dl/novatoken" target="_blank" rel="noreferrer">macOS</a><a href="https://novatoken.novaislandai.workers.dev/dl/novatoken-linux-amd64" target="_blank" rel="noreferrer">Linux x64</a><a href="https://novatoken.novaislandai.workers.dev/dl/novatoken-linux-arm64" target="_blank" rel="noreferrer">Linux ARM</a><a href="https://novatoken.novaislandai.workers.dev/dl/novatoken-windows-amd64.exe" target="_blank" rel="noreferrer">Windows</a></div></div>
-        <div className="token-rank-command"><span>首次同步（macOS / Linux，已安装 NovaToken 后执行）</span><code>{syncCommand}</code><button type="button" className="btn-outline" onClick={() => void copy(syncCommand, "首次同步命令已复制")}><Copy aria-hidden="true" />复制同步命令</button></div>
-        <p className="token-rank-credential-note">NovaToken 只在本机扫描使用记录并输出汇总数字；这条命令只上传日期、工具、模型及 Token 数量。首次同步成功后，刷新本页即可看到自己的用量与排名。</p>
-        <div className="token-rank-dialog-actions"><button className="btn-primary" type="button" onClick={() => setCredential(null)}>我已保存</button></div>
+        <div className="token-rank-dialog-head"><div><h2 id="tokenRankCredentialTitle">把这台电脑接入排行榜</h2><p>只需选择系统，复制一条命令运行；首次扫描历史记录可能需要几分钟。</p></div><button type="button" className="token-rank-close" onClick={() => setCredential(null)} aria-label="关闭">×</button></div>
+        <div className="token-rank-connect-step"><span>① 选择你的电脑</span><div className="token-rank-os-tabs"><button type="button" className={installOs === "mac" ? "active" : ""} onClick={() => setInstallOs("mac")}>macOS / Linux</button><button type="button" className={installOs === "windows" ? "active" : ""} onClick={() => setInstallOs("windows")}>Windows</button></div></div>
+        <div className="token-rank-command token-rank-one-step"><span>② 复制命令并粘贴到{installOs === "mac" ? "「终端」" : " PowerShell"}运行</span><code>{installCommand}</code><button type="button" className="btn-primary" onClick={() => void copy(installCommand, "接入命令已复制") }><Copy aria-hidden="true" />复制接入命令</button></div>
+        <div className="token-rank-command token-rank-ai-help"><span>不想自己操作？复制后直接发给 Codex 或 Claude Code</span><code>{aiPrompt}</code><button type="button" className="btn-outline" onClick={() => void copy(aiPrompt, "AI 接入提示已复制")}><Copy aria-hidden="true" />复制给 AI</button></div>
+        <p className="token-rank-credential-note">接入完成后会自动完成首次同步；以后想更新数据，运行安装完成时终端显示的“更新命令”即可。</p>
+        <div className="token-rank-dialog-actions"><button className="btn-primary" type="button" onClick={() => setCredential(null)}>完成</button></div>
       </section></div> : null}
     </section>
   );
