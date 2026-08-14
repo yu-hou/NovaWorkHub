@@ -28,13 +28,7 @@ type Overview = {
   suggested_handle: string;
 };
 
-type DeviceCredential = {
-  device: { id: string; label: string };
-  device_key: string;
-  upload_url: string;
-  handle: string;
-  instructions: string;
-};
+type InstallCredential = { install_token: string; expires_at: string };
 
 function formatTokens(value: number) {
   if (value >= 100_000_000) return `${(value / 100_000_000).toFixed(value >= 1_000_000_000 ? 1 : 2)}亿`;
@@ -45,6 +39,18 @@ function formatTokens(value: number) {
 function formatTime(value: string | null) {
   if (!value) return "尚未同步";
   return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
+function formatExpiry(value: string) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date(value));
 }
 
 function rankBadge(rank: number) {
@@ -85,7 +91,7 @@ export default function TokenRankView() {
   const [joining, setJoining] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [credential, setCredential] = useState<DeviceCredential | null>(null);
+  const [credential, setCredential] = useState<InstallCredential | null>(null);
   const [installOs, setInstallOs] = useState<InstallOs>("mac");
   const [notice, setNotice] = useState("");
 
@@ -136,21 +142,20 @@ export default function TokenRankView() {
 
   const installCommand = credential
     ? installOs === "mac"
-      ? `curl -fsSL https://nova-academy-8fk.pages.dev/install.sh | sh -s -- '${credential.device_key}'`
-      : `$env:NWH_TOKEN_RANK_DEVICE_KEY='${credential.device_key}'; irm https://nova-academy-8fk.pages.dev/install.ps1 | iex`
+      ? `curl -fsSL https://nova-academy-8fk.pages.dev/install.sh | sh -s -- '${credential.install_token}'`
+      : `$env:NWH_TOKEN_RANK_INSTALL_TOKEN='${credential.install_token}'; irm https://nova-academy-8fk.pages.dev/install.ps1 | iex`
     : "";
 
   const aiPrompt = credential
-    ? `请帮我在这台${installOs === "mac" ? " macOS 或 Linux" : " Windows"}电脑接入 NovaWorkHub Token Rank。请在终端执行下面这条命令，等待首次扫描完成后告诉我是否上传成功。不要在回复中重复命令、设备信息或任何本地日志内容；不要读取、修改或删除无关文件。\n\n${installCommand}`
+    ? `帮我在当前电脑执行上面的命令。命令会自动下载 Token Rank、绑定当前网站账号并同步近 30 天数据，不需要额外授权操作。\n请持续观察终端输出；看到 Token Rank setup complete、Cloud sync ok、Background sync installed 和 Done 后，告诉我已经完成关联，数据也已经推送。\n完成后提醒我打开 https://nova-academy-8fk.pages.dev/token-rank/ 查看自己的 Token 消耗，并建议收藏这个网址。后续每 30 分钟会自动同步一次。\n这条安装令牌有效期到：${credential.expires_at}\n\n${installCommand}`
     : "";
 
   const saveSettings = async () => {
     setSaving(true);
     try {
       await tokenRankCall({ action: "save-settings", handle, city, join_board: joining, is_public: isPublic });
-      setNotice("排行榜设置已保存");
       setSettingsOpen(false);
-      await load();
+      await createDevice();
     } catch (caught) {
       setNotice(caught instanceof Error ? caught.message : "保存失败");
     } finally {
@@ -161,7 +166,10 @@ export default function TokenRankView() {
   const createDevice = async () => {
     setSaving(true);
     try {
-      const next = await tokenRankCall<DeviceCredential>({ action: "issue-device", label: "我的电脑" });
+      const next = await tokenRankCall<InstallCredential>({ action: "issue-install-token" });
+      if (!next?.install_token || !next?.expires_at) {
+        throw new Error("接入服务正在更新，请稍后重试");
+      }
       setCredential(next);
       setNotice("");
       await load();
@@ -223,7 +231,7 @@ export default function TokenRankView() {
           <button className={`btn-outline token-rank-mine-toggle${onlyMine ? " active" : ""}`} type="button" onClick={() => setOnlyMine((value) => !value)}>仅看我的数据</button>
           <button className="btn-outline" type="button" onClick={() => setSettingsOpen(true)}>排行榜设置</button>
           <button className="btn-primary" type="button" onClick={() => { if (data?.member) void createDevice(); else setSettingsOpen(true); }}>
-            <MonitorCog aria-hidden="true" />接入我的电脑
+            <MonitorCog aria-hidden="true" />生成当前接入命令
           </button>
         </div>
       </div>
@@ -277,11 +285,11 @@ export default function TokenRankView() {
       </section></div> : null}
 
       {credential ? <div className="token-rank-dialog-backdrop" role="presentation"><section className="token-rank-dialog token-rank-credential-dialog" role="dialog" aria-modal="true" aria-labelledby="tokenRankCredentialTitle">
-        <div className="token-rank-dialog-head"><div><h2 id="tokenRankCredentialTitle">把这台电脑接入排行榜</h2><p>只需选择系统，复制一条命令运行；首次扫描历史记录可能需要几分钟。</p></div><button type="button" className="token-rank-close" onClick={() => setCredential(null)} aria-label="关闭">×</button></div>
+        <div className="token-rank-dialog-head"><div><h2 id="tokenRankCredentialTitle">把这台电脑接入排行榜</h2><p>只需选择系统，复制一条命令运行；首次扫描历史记录可能需要几分钟。</p><p className="token-rank-install-expiry">本条接入命令有效至：{formatExpiry(credential.expires_at)}</p></div><button type="button" className="token-rank-close" onClick={() => setCredential(null)} aria-label="关闭">×</button></div>
         <div className="token-rank-connect-step"><span>① 选择你的电脑</span><div className="token-rank-os-tabs"><button type="button" className={installOs === "mac" ? "active" : ""} onClick={() => setInstallOs("mac")}>macOS / Linux</button><button type="button" className={installOs === "windows" ? "active" : ""} onClick={() => setInstallOs("windows")}>Windows</button></div></div>
         <div className="token-rank-command token-rank-one-step"><span>② 复制命令并粘贴到{installOs === "mac" ? "「终端」" : " PowerShell"}运行</span><code>{installCommand}</code><button type="button" className="btn-primary" onClick={() => void copy(installCommand, "接入命令已复制") }><Copy aria-hidden="true" />复制接入命令</button></div>
         <div className="token-rank-command token-rank-ai-help"><span>不想自己操作？复制后直接发给 Codex 或 Claude Code</span><code>{aiPrompt}</code><button type="button" className="btn-outline" onClick={() => void copy(aiPrompt, "AI 接入提示已复制")}><Copy aria-hidden="true" />复制给 AI</button></div>
-        <p className="token-rank-credential-note">接入完成后会自动完成首次同步；以后想更新数据，运行安装完成时终端显示的“更新命令”即可。</p>
+        <p className="token-rank-credential-note">接入完成后会自动完成首次同步；之后会每 30 分钟自动更新一次数据。</p>
         <div className="token-rank-dialog-actions"><button className="btn-primary" type="button" onClick={() => setCredential(null)}>完成</button></div>
       </section></div> : null}
     </section>

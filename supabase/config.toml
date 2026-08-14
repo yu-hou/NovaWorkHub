@@ -448,3 +448,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/token-rank-upload/deno.json"
 entrypoint = "./functions/token-rank-upload/index.ts"
+
+[functions.token-rank-connect]
+enabled = true
+verify_jwt = false
+import_map = "./functions/token-rank-connect/deno.json"
+entrypoint = "./functions/token-rank-connect/index.ts"

@@ -43,6 +43,11 @@ function createDeviceKey() {
     .replaceAll("=", "")}`;
 }
 
+function createInstallToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return `nwh_setup_${btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "")}`;
+}
+
 function uploadUrl(request: Request) {
   const url = new URL(request.url);
   url.protocol = "https:";
@@ -63,7 +68,7 @@ export default {
     if (!userId) return jsonError("请先登录", 401);
 
     const payload = await req.json().catch(() => ({})) as {
-      action?: "overview" | "save-settings" | "issue-device" | "revoke-device";
+      action?: "overview" | "save-settings" | "issue-device" | "issue-install-token" | "revoke-device";
       handle?: string;
       city?: string;
       join_board?: boolean;
@@ -126,6 +131,16 @@ export default {
         handle: member.handle,
         instructions: "请妥善保存设备密钥；关闭弹窗后将无法再次查看。",
       });
+    }
+
+    if (action === "issue-install-token") {
+      const { data: member } = await ctx.supabaseAdmin.from("token_rank_members").select("user_id").eq("user_id", userId).maybeSingle();
+      if (!member) return jsonError("请先保存排行榜昵称，再生成接入命令");
+      const token = createInstallToken();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      const { error } = await ctx.supabaseAdmin.from("token_rank_install_tokens").insert({ user_id: userId, token_hash: await sha256(token), expires_at: expiresAt });
+      if (error) return jsonError(error.message, 500);
+      return Response.json({ install_token: token, expires_at: expiresAt });
     }
 
     if (action === "revoke-device") {

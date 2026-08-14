@@ -4,17 +4,22 @@ set -eu
 
 SERVER="https://nova-academy-8fk.pages.dev"
 UPLOAD_URL="https://aqelzocuukilmfakzgdv.supabase.co/functions/v1/token-rank-upload"
-DEVICE_KEY="${1:-${NWH_TOKEN_RANK_DEVICE_KEY:-}}"
+INSTALL_TOKEN="${1:-${NWH_TOKEN_RANK_INSTALL_TOKEN:-}}"
 
-if [ -z "$DEVICE_KEY" ]; then
-  echo "缺少设备密钥。请先在 NovaWorkHub 的 Token Rank 页面生成接入命令。" >&2
+if [ -z "$INSTALL_TOKEN" ]; then
+  echo "缺少安装令牌。请先在 NovaWorkHub 的 Token Rank 页面生成接入命令。" >&2
   exit 1
 fi
 
-case "$DEVICE_KEY" in
-  nwh_tr_*) ;;
-  *) echo "设备密钥格式无效。" >&2; exit 1 ;;
+case "$INSTALL_TOKEN" in
+  nwh_setup_*) ;;
+  *) echo "安装令牌格式无效。" >&2; exit 1 ;;
 esac
+
+CONNECT="$(curl --fail --location --silent --show-error -X POST 'https://aqelzocuukilmfakzgdv.supabase.co/functions/v1/token-rank-connect' -H 'Content-Type: application/json' --data "{\"token\":\"$INSTALL_TOKEN\",\"label\":\"本机客户端\"}")"
+DEVICE_KEY="$(printf '%s' "$CONNECT" | sed -n 's/.*"device_key":"\([^"]*\)".*/\1/p')"
+if [ -z "$DEVICE_KEY" ]; then echo "关联 NovaWorkHub 账号失败。" >&2; exit 1; fi
+echo "Token Rank setup complete"
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -67,5 +72,36 @@ EOF
 chmod 700 "$SYNC"
 echo "▸ 已安装，正在扫描并上传汇总用量…"
 "$SYNC"
+echo "Cloud sync ok"
+if [ "$(uname -s)" = "Darwin" ]; then
+  PLIST="$HOME/Library/LaunchAgents/com.novaworkhub.token-rank.plist"
+  mkdir -p "$HOME/Library/LaunchAgents"
+  cat > "$PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>Label</key><string>com.novaworkhub.token-rank</string><key>ProgramArguments</key><array><string>$SYNC</string></array><key>StartInterval</key><integer>1800</integer></dict></plist>
+EOF
+  launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || true
+  echo "Background sync installed"
+elif command -v systemctl >/dev/null 2>&1; then
+  UNIT_DIR="$HOME/.config/systemd/user"
+  mkdir -p "$UNIT_DIR"
+  cat > "$UNIT_DIR/novaworkhub-token-rank.service" <<EOF
+[Unit]
+Description=NovaWorkHub Token Rank sync
+[Service]
+Type=oneshot
+ExecStart=$SYNC
+EOF
+  cat > "$UNIT_DIR/novaworkhub-token-rank.timer" <<EOF
+[Unit]
+Description=NovaWorkHub Token Rank sync timer
+[Timer]
+OnBootSec=3m
+OnUnitActiveSec=30m
+[Install]
+WantedBy=timers.target
+EOF
+  systemctl --user daemon-reload && systemctl --user enable --now novaworkhub-token-rank.timer
+  echo "Background sync installed"
+fi
 echo ""
-echo "✓ 接入完成。以后需要更新时，运行：$SYNC"
+echo "Done"

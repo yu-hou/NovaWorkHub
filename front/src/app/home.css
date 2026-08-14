@@ -9427,9 +9427,53 @@ html.dark .theme-toggle-sun { display: inline-flex; }
 }
 
 .feishu-content .feishu-doc-frame {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 70vh;
+}
+
+.feishu-watermark-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.feishu-watermark-layer span {
+  position: absolute;
+  left: var(--watermark-left);
+  top: var(--watermark-top);
+  color: rgba(79, 79, 84, 0.18);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: clamp(10px, 1vw, 13px);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  transform: translate(-50%, -50%) rotate(-24deg);
+  white-space: nowrap;
+}
+
+/* 每组保持同一倾角，但以不等距的斜向轨迹散布。 */
+.feishu-watermark-layer span:nth-child(4n + 1) {
+  transform: translate(-50%, -50%) rotate(-24deg);
+  font-weight: 700;
+}
+
+.feishu-watermark-layer span:nth-child(4n + 2) {
+  transform: translate(-50%, -50%) rotate(-24deg);
+}
+
+.feishu-watermark-layer span:nth-child(4n + 3) {
+  transform: translate(-50%, -50%) rotate(-24deg);
+  font-weight: 700;
+}
+
+.feishu-watermark-layer span:nth-child(4n) {
+  transform: translate(-50%, -50%) rotate(-24deg);
 }
 
 .feishu-content .feishu-doc-toolbar {
@@ -9456,6 +9500,8 @@ html.dark .theme-toggle-sun { display: inline-flex; }
 }
 
 .feishu-content .feishu-doc-mount {
+  position: relative;
+  z-index: 1;
   width: 100%;
   min-height: 72vh;
   background: var(--panel);
@@ -9600,10 +9646,14 @@ body.course-reader-app {
   min-height: 100dvh;
 }
 
+.feishu-content-fullscreen .feishu-watermark-layer {
+  padding: 56px 22px;
+}
+
 .course-reader-loading {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9612,6 +9662,10 @@ body.course-reader-app {
   color: var(--muted);
   font-size: 14px;
   pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .feishu-watermark-layer span { font-size: 9px; }
 }
 
 .feishu-open-card.feishu-open-card-fullscreen {

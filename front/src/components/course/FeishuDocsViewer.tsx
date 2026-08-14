@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 
 import { useTheme } from "@/components/theme-provider";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { ApiError, apiFetch } from "@/lib/api";
 
 const FEISHU_SDK_SRC =
@@ -27,6 +28,9 @@ type DocComponentInstance = {
 type DocComponentSdkConstructor = new (options: {
   src: string;
   mount: HTMLElement;
+  config?: {
+    header?: { enable?: boolean };
+  };
   theme?: "light" | "dark";
   size?: { width?: string | number; height?: string | number };
   auth: {
@@ -56,6 +60,15 @@ type FeishuDocsViewerProps = {
   fullScreen?: boolean;
   initialAuth?: FeishuSignature;
 };
+
+// 保持斜向阅读轨迹，同时避免形成整齐的横竖网格。
+const watermarkPositions = [
+  [2, 8], [29, 1], [58, 10], [87, 4],
+  [13, 25], [43, 19], [72, 29], [101, 23],
+  [-5, 44], [25, 37], [55, 47], [84, 41],
+  [8, 62], [38, 56], [67, 66], [96, 59],
+  [-2, 81], [27, 75], [57, 85], [87, 79],
+] as const;
 
 function FeishuFallbackCard({
   url,
@@ -189,6 +202,7 @@ export function FeishuDocsViewer({
   initialAuth,
 }: FeishuDocsViewerProps) {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const mountRef = useRef<HTMLDivElement>(null);
   const componentRef = useRef<DocComponentInstance | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "fallback">(
@@ -262,6 +276,10 @@ export function FeishuDocsViewer({
         const instance = new DocSdk({
           src: embedSrc,
           mount: mountNode,
+          config: {
+            // 使用飞书组件的官方配置隐藏内部 Header，而非用 CSS 遮挡跨域内容。
+            header: { enable: false },
+          },
           theme: theme === "dark" ? "dark" : "light",
           size: {
             width: "100%",
@@ -352,6 +370,16 @@ export function FeishuDocsViewer({
       className={`feishu-content${fullScreen ? " feishu-content-fullscreen" : ""}`}
     >
       <div className="feishu-doc-frame">
+        <div className="feishu-watermark-layer" aria-hidden="true">
+          {watermarkPositions.map(([left, top], index) => (
+            <span
+              key={index}
+              style={{ "--watermark-left": `${left}%`, "--watermark-top": `${top}%` } as CSSProperties}
+            >
+              {index % 2 === 0 ? "NovaWorkHub" : user?.email || "课程阅读"}
+            </span>
+          ))}
+        </div>
         {!fullScreen ? (
           <div className="feishu-doc-toolbar">
             <span>

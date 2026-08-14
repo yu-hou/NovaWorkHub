@@ -1,9 +1,12 @@
 $ErrorActionPreference = "Stop"
 $Server = "https://nova-academy-8fk.pages.dev"
 $UploadUrl = "https://aqelzocuukilmfakzgdv.supabase.co/functions/v1/token-rank-upload"
-$DeviceKey = if ($args.Count -gt 0) { $args[0] } elseif ($env:NWH_TOKEN_RANK_DEVICE_KEY) { $env:NWH_TOKEN_RANK_DEVICE_KEY } else { "" }
+$InstallToken = if ($args.Count -gt 0) { $args[0] } elseif ($env:NWH_TOKEN_RANK_INSTALL_TOKEN) { $env:NWH_TOKEN_RANK_INSTALL_TOKEN } else { "" }
 
-if (-not $DeviceKey.StartsWith("nwh_tr_")) { throw "缺少有效设备密钥。请先在 NovaWorkHub 的 Token Rank 页面生成接入命令。" }
+if (-not $InstallToken.StartsWith("nwh_setup_")) { throw "缺少有效安装令牌。请先在 NovaWorkHub 的 Token Rank 页面生成接入命令。" }
+$DeviceKey = (Invoke-RestMethod -Method Post -Uri "https://aqelzocuukilmfakzgdv.supabase.co/functions/v1/token-rank-connect" -ContentType "application/json" -Body (@{ token = $InstallToken; label = "本机客户端" } | ConvertTo-Json -Compress)).device_key
+if (-not $DeviceKey) { throw "关联 NovaWorkHub 账号失败。" }
+Write-Host "Token Rank setup complete"
 
 $BinDir = Join-Path $HOME ".local\bin"
 $Bin = Join-Path $BinDir "novatoken.exe"
@@ -33,4 +36,8 @@ Set-Content -NoNewline -Path $KeyFile -Value $DeviceKey
 
 Write-Host "▸ 已安装，正在扫描并上传汇总用量…"
 & $Sync
-Write-Host "✓ 接入完成。以后需要更新时，运行：powershell -ExecutionPolicy Bypass -File `"$Sync`""
+Write-Host "Cloud sync ok"
+$TaskName = "NovaWorkHub Token Rank"
+schtasks /Create /TN $TaskName /TR "powershell -ExecutionPolicy Bypass -File `"$Sync`"" /SC MINUTE /MO 30 /F | Out-Null
+Write-Host "Background sync installed"
+Write-Host "Done"
