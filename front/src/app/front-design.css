@@ -151,8 +151,10 @@ p { text-wrap: pretty; }
 .app-shell.is-sidebar-collapsed .sidebar-footer { display: none; }
 .app-shell.is-sidebar-collapsed .sidebar-collapse {
     position: absolute; top: 28px; right: 8px;
-    width: 24px; height: 24px; min-height: 24px; transform: rotate(180deg);
+    width: 24px; height: 24px; min-height: 24px;
 }
+.app-shell.is-sidebar-collapsed .sidebar-collapse span:first-child { transform: translateY(-2px) rotate(45deg); }
+.app-shell.is-sidebar-collapsed .sidebar-collapse span:last-child { transform: translateY(2px) rotate(-45deg); }
 .app-shell.is-sidebar-collapsed .side-nav { padding-right: 0; }
 .app-shell.is-sidebar-collapsed .nav-item {
     justify-content: center; gap: 0; padding: 0; aspect-ratio: 1 / 1;
@@ -193,12 +195,18 @@ p { text-wrap: pretty; }
 .sidebar-brand-subtitle { display: block; color: var(--body-mid); font-size: 12px; }
 .sidebar-collapse {
     flex: 0 0 auto; width: 32px; height: 32px; min-height: 32px; padding: 0;
-    display: grid; grid-template-columns: repeat(2, 4px); place-content: center; gap: 3px;
+    position: relative; display: grid; place-items: center;
     border: 0; border-radius: var(--radius-btn); background: transparent; color: var(--body-mid);
 }
-.sidebar-collapse span { display: block; width: 4px; height: 16px; border-radius: 99px; background: currentColor; }
-.sidebar-collapse span:last-child { opacity: .38; }
+.sidebar-collapse span {
+    position: absolute; display: block; width: 9px; height: 2px;
+    border-radius: 99px; background: currentColor;
+    transition: transform 180ms var(--ease-out);
+}
+.sidebar-collapse span:first-child { transform: translateY(-2px) rotate(-45deg); }
+.sidebar-collapse span:last-child { transform: translateY(2px) rotate(45deg); }
 .sidebar-collapse:hover { background: var(--surface-hover); color: var(--ink); transform: none; }
+.sidebar-collapse:focus-visible { outline: 3px solid color-mix(in srgb, var(--ink) 16%, transparent); outline-offset: 2px; }
 .side-nav { display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: visible; padding-right: 2px; }
 
 /* 顶部快捷区（不带分组标签，呼应参考图的 Tasks / Activities 行） */

@@ -34,6 +34,8 @@ type CourseForm = {
   feishu_doc_url: string;
 };
 
+type CourseActionKind = "delete" | "access" | "publish";
+
 const EMPTY_FORM: CourseForm = {
   title: "",
   category: "",
@@ -45,13 +47,27 @@ const EMPTY_FORM: CourseForm = {
   feishu_doc_url: "",
 };
 
+function courseToForm(course: AdminCourse): CourseForm {
+  return {
+    title: course.title,
+    category: course.category,
+    category_class: course.category_class,
+    summary: course.summary,
+    cover: course.cover,
+    is_member_only: course.is_member_only,
+    is_published: course.is_published,
+    feishu_doc_url: course.feishu_doc_url,
+  };
+}
+
 export function AdminCoursesPage() {
   const { isAdmin, loading: authLoading } = useAuth();
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState<{ type: "ok" | "err"; text: string } | null>(
     null,
   );
@@ -59,65 +75,154 @@ export function AdminCoursesPage() {
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [reorderingId, setReorderingId] = useState<number | null>(null);
+  const [pendingCourseActions, setPendingCourseActions] = useState<Record<number, CourseActionKind>>({});
+  const [courseToDelete, setCourseToDelete] = useState<AdminCourse | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const deepLinkHandledRef = useRef(false);
+  const loadSequenceRef = useRef(0);
+  const toastTimerRef = useRef<number | null>(null);
   const [form, setForm] = useState<CourseForm>(EMPTY_FORM);
+  const [formBaseline, setFormBaseline] = useState<CourseForm>(EMPTY_FORM);
+  const hasUnsavedChanges = JSON.stringify(form) !== JSON.stringify(formBaseline);
 
-  const showToast = (type: "ok" | "err", text: string) => {
+  const dismissToast = useCallback(() => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setToast(null);
+  }, []);
+
+  const showToast = useCallback((type: "ok" | "err", text: string) => {
+    if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
     setToast({ type, text });
-    window.setTimeout(() => setToast(null), 5200);
-  };
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, type === "ok" ? 3000 : 5200);
+  }, []);
+
+  useEffect(() => () => {
+    if (toastTimerRef.current !== null) window.clearTimeout(toastTimerRef.current);
+  }, []);
 
   const activeCategories = categories.filter((c) => c.is_active);
 
   const resetForm = useCallback((categoryList = categories) => {
     const first = categoryList.find((c) => c.is_active);
-    setEditingId(null);
-    setForm({
+    const nextForm = {
       ...EMPTY_FORM,
       category: first?.name || "",
       category_class: first?.color_class || "category-gold",
-    });
-    setMessage("");
-    setError("");
+    };
+    setEditingId(null);
+    setForm(nextForm);
+    setFormBaseline(nextForm);
+    setFormError("");
   }, [categories]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ background = false }: { background?: boolean } = {}) => {
     if (!isAdmin) {
       setLoading(false);
-      return;
+      return false;
     }
-    setLoading(true);
+    const requestId = ++loadSequenceRef.current;
+    if (background) setRefreshing(true);
+    else setLoading(true);
     try {
       const [courseData, categoryData] = await Promise.all([
         apiFetch<AdminCourse[]>("/api/admin/courses"),
         apiFetch<AdminCategory[]>("/api/admin/categories"),
       ]);
+      if (requestId !== loadSequenceRef.current) return false;
       setCourses(courseData);
       setCategories(categoryData);
-      setError("");
+      setLoadError("");
+      const first = categoryData.find((c) => c.is_active);
+      const initialForm = {
+        ...EMPTY_FORM,
+        category: first?.name || "",
+        category_class: first?.color_class || "category-gold",
+      };
       setForm((f) => {
         if (f.category) return f;
-        const first = categoryData.find((c) => c.is_active);
-        if (!first) return f;
-        return {
-          ...f,
-          category: first.name,
-          category_class: first.color_class,
-        };
+        return initialForm;
       });
+      setFormBaseline((baseline) => baseline.category ? baseline : initialForm);
+      return true;
     } catch (err) {
-      setError(friendlyError(err, "课程列表加载失败"));
+      if (requestId === loadSequenceRef.current) {
+        setLoadError(friendlyError(err, "课程列表加载失败"));
+      }
+      return false;
     } finally {
-      setLoading(false);
+      if (requestId === loadSequenceRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [isAdmin]);
+
+  const refreshCourses = useCallback(async () => {
+    const refreshed = await load({ background: true });
+    if (refreshed) showToast("ok", "课程列表已刷新");
+  }, [load, showToast]);
+
+  const focusCourseEditor = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const editor = document.getElementById("course-editor");
+      if (editor) {
+        const top = window.scrollY + editor.getBoundingClientRect().top - 24;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      }
+      document.getElementById("courseTitle")?.focus({ preventScroll: true });
+    });
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
     void load();
   }, [authLoading, load]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const confirmInternalNavigation = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.href === window.location.href) return;
+      if (!window.confirm("课程内容尚未保存，确认离开当前页面吗？")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    document.addEventListener("click", confirmInternalNavigation, true);
+    return () => {
+      window.removeEventListener("beforeunload", warnBeforeUnload);
+      document.removeEventListener("click", confirmInternalNavigation, true);
+    };
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!courseToDelete) return;
+    deleteCancelRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !pendingCourseActions[courseToDelete.id]) {
+        setCourseToDelete(null);
+      }
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [courseToDelete, pendingCourseActions]);
 
   useEffect(() => {
     if (deepLinkHandledRef.current || courses.length === 0) return;
@@ -126,36 +231,25 @@ export function AdminCoursesPage() {
     const course = courses.find((item) => item.id === id);
     if (!course) return;
     deepLinkHandledRef.current = true;
+    const nextForm = courseToForm(course);
     setEditingId(course.id);
-    setForm({
-      title: course.title,
-      category: course.category,
-      category_class: course.category_class,
-      summary: course.summary,
-      cover: course.cover,
-      is_member_only: course.is_member_only,
-      is_published: course.is_published,
-      feishu_doc_url: course.feishu_doc_url,
-    });
-    window.requestAnimationFrame(() => {
-      document.getElementById("course-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById("courseTitle")?.focus();
-    });
-  }, [courses]);
+    setForm(nextForm);
+    setFormBaseline(nextForm);
+    focusCourseEditor();
+  }, [courses, focusCourseEditor]);
 
   const onCoverFile = async (file: File | null) => {
     if (!file) return;
-    setMessage("");
-    setError("");
+    setFormError("");
     if (file.size > 4 * 1024 * 1024) {
       const text = "封面图片不能超过 4MB";
-      setError(text);
+      setFormError(text);
       showToast("err", text);
       return;
     }
     if (!file.type.startsWith("image/")) {
       const text = "请选择图片文件（JPG / PNG / WEBP / GIF）";
-      setError(text);
+      setFormError(text);
       showToast("err", text);
       return;
     }
@@ -167,11 +261,10 @@ export function AdminCoursesPage() {
       );
       setForm((f) => ({ ...f, cover: res.url }));
       const text = `封面上传成功（约 ${Math.round(res.bytes / 1024)}KB）`;
-      setMessage(text);
       showToast("ok", text);
     } catch (err) {
       const text = friendlyError(err, "封面上传失败");
-      setError(text);
+      setFormError(text);
       showToast("err", text);
     } finally {
       setUploading(false);
@@ -180,40 +273,42 @@ export function AdminCoursesPage() {
 
   const onSave = async (event: FormEvent) => {
     event.preventDefault();
-    setMessage("");
-    setError("");
+    setFormError("");
     if (!form.title.trim()) {
       const text = "请填写课程标题";
-      setError(text);
+      setFormError(text);
       showToast("err", text);
       return;
     }
     if (!form.category) {
       const text = "请先在「分类管理」中创建分类，再选择分类";
-      setError(text);
+      setFormError(text);
       showToast("err", text);
       return;
     }
     if (!form.feishu_doc_url.trim()) {
       const text = "请填写飞书文档链接";
-      setError(text);
+      setFormError(text);
       showToast("err", text);
       return;
     }
     setSubmitting(true);
+    const courseTitle = form.title.trim();
+    const isEditing = editingId !== null;
     try {
       await apiFetch(
         editingId ? `/api/admin/courses/${editingId}` : "/api/admin/courses",
         { method: editingId ? "PATCH" : "POST", body: form },
       );
-      const text = editingId ? "课程修改已保存" : "课程创建成功";
+      const text = isEditing
+        ? `课程「${courseTitle}」修改已保存`
+        : `课程「${courseTitle}」创建成功`;
       resetForm(activeCategories);
-      setMessage(text);
       showToast("ok", text);
-      await load();
+      await load({ background: true });
     } catch (err) {
       const text = friendlyError(err, editingId ? "修改失败" : "创建失败");
-      setError(text);
+      setFormError(text);
       showToast("err", text);
     } finally {
       setSubmitting(false);
@@ -221,23 +316,18 @@ export function AdminCoursesPage() {
   };
 
   const startEdit = (course: AdminCourse) => {
+    if (hasUnsavedChanges && !window.confirm("当前课程内容尚未保存，确认切换到另一门课程吗？")) return;
+    const nextForm = courseToForm(course);
     setEditingId(course.id);
-    setForm({
-      title: course.title,
-      category: course.category,
-      category_class: course.category_class,
-      summary: course.summary,
-      cover: course.cover,
-      is_member_only: course.is_member_only,
-      is_published: course.is_published,
-      feishu_doc_url: course.feishu_doc_url,
-    });
-    setMessage("");
-    setError("");
-    window.requestAnimationFrame(() => {
-      document.getElementById("course-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById("courseTitle")?.focus();
-    });
+    setForm(nextForm);
+    setFormBaseline(nextForm);
+    setFormError("");
+    focusCourseEditor();
+  };
+
+  const cancelEdit = () => {
+    if (hasUnsavedChanges && !window.confirm("修改尚未保存，确认放弃这些更改吗？")) return;
+    resetForm();
   };
 
   const onCoverDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -247,20 +337,36 @@ export function AdminCoursesPage() {
     void onCoverFile(event.dataTransfer.files?.[0] ?? null);
   };
 
-  const onDelete = async (id: number) => {
-    if (!window.confirm("确认删除该课程？")) return;
+  const beginCourseAction = (courseId: number, kind: CourseActionKind) => {
+    setPendingCourseActions((current) => ({ ...current, [courseId]: kind }));
+  };
+
+  const endCourseAction = (courseId: number) => {
+    setPendingCourseActions((current) => {
+      const next = { ...current };
+      delete next[courseId];
+      return next;
+    });
+  };
+
+  const confirmDelete = async (course: AdminCourse) => {
+    beginCourseAction(course.id, "delete");
     try {
-      await apiFetch(`/api/admin/courses/${id}`, { method: "DELETE" });
-      showToast("ok", "课程已删除");
-      await load();
+      await apiFetch(`/api/admin/courses/${course.id}`, { method: "DELETE" });
+      showToast("ok", `课程「${course.title}」已删除`);
+      setCourseToDelete(null);
+      if (editingId === course.id) resetForm(activeCategories);
+      await load({ background: true });
     } catch (err) {
       const text = friendlyError(err, "删除失败");
-      setError(text);
       showToast("err", text);
+    } finally {
+      endCourseAction(course.id);
     }
   };
 
   const toggleMemberOnly = async (course: AdminCourse) => {
+    beginCourseAction(course.id, "access");
     try {
       await apiFetch(`/api/admin/courses/${course.id}`, {
         method: "PATCH",
@@ -268,13 +374,45 @@ export function AdminCoursesPage() {
       });
       showToast(
         "ok",
-        course.is_member_only ? "已改为公开课程" : "已设为会员专享",
+        course.is_member_only
+          ? `课程「${course.title}」已改为公开课程`
+          : `课程「${course.title}」已设为会员专享`,
       );
-      await load();
+      if (editingId === course.id) {
+        setForm((current) => ({ ...current, is_member_only: !course.is_member_only }));
+        setFormBaseline((current) => ({ ...current, is_member_only: !course.is_member_only }));
+      }
+      await load({ background: true });
     } catch (err) {
       const text = friendlyError(err, "更新失败");
-      setError(text);
       showToast("err", text);
+    } finally {
+      endCourseAction(course.id);
+    }
+  };
+
+  const togglePublished = async (course: AdminCourse) => {
+    beginCourseAction(course.id, "publish");
+    try {
+      await apiFetch(`/api/admin/courses/${course.id}`, {
+        method: "PATCH",
+        body: { is_published: !course.is_published },
+      });
+      showToast(
+        "ok",
+        course.is_published
+          ? `课程「${course.title}」已下架并转为草稿`
+          : `课程「${course.title}」已发布`,
+      );
+      if (editingId === course.id) {
+        setForm((current) => ({ ...current, is_published: !course.is_published }));
+        setFormBaseline((current) => ({ ...current, is_published: !course.is_published }));
+      }
+      await load({ background: true });
+    } catch (err) {
+      showToast("err", friendlyError(err, course.is_published ? "下架失败" : "发布失败"));
+    } finally {
+      endCourseAction(course.id);
     }
   };
 
@@ -289,7 +427,6 @@ export function AdminCoursesPage() {
     const adjacent = courses[nextIndex];
     setCourses(normalized);
     setReorderingId(course.id);
-    setError("");
     try {
       await apiFetch("/api/admin/courses/reorder", {
         method: "POST",
@@ -300,13 +437,16 @@ export function AdminCoursesPage() {
           second_sort_order: course.sort_order,
         },
       });
-      showToast("ok", direction === "up" ? "课程已上移" : "课程已下移");
-      await load();
+      showToast(
+        "ok",
+        `课程「${course.title}」已${direction === "up" ? "上移" : "下移"}至第 ${nextIndex + 1} 位`,
+      );
+      await load({ background: true });
     } catch (err) {
       const text = friendlyError(err, "课程顺序更新失败");
-      setError(text);
+      setCourses(courses);
       showToast("err", text);
-      await load();
+      await load({ background: true });
     } finally {
       setReorderingId(null);
     }
@@ -315,9 +455,64 @@ export function AdminCoursesPage() {
   return (
     <AdminShell>
       <section className="view admin-page">
+        {courseToDelete ? (
+          <div
+            className="admin-confirm-backdrop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !pendingCourseActions[courseToDelete.id]) {
+                setCourseToDelete(null);
+              }
+            }}
+          >
+            <section
+              className="admin-confirm-dialog"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-course-title"
+              aria-describedby="delete-course-description"
+            >
+              <span className="admin-confirm-kicker">DELETE COURSE</span>
+              <h2 id="delete-course-title">确认删除这门课程？</h2>
+              <p id="delete-course-description">
+                「{courseToDelete.title}」及其课程地址将被永久删除，此操作无法撤销。
+              </p>
+              <div className="admin-confirm-actions">
+                <button
+                  ref={deleteCancelRef}
+                  type="button"
+                  disabled={Boolean(pendingCourseActions[courseToDelete.id])}
+                  onClick={() => setCourseToDelete(null)}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="is-danger"
+                  disabled={Boolean(pendingCourseActions[courseToDelete.id])}
+                  onClick={() => void confirmDelete(courseToDelete)}
+                >
+                  {pendingCourseActions[courseToDelete.id] === "delete" ? "删除中…" : "确认删除"}
+                </button>
+              </div>
+            </section>
+          </div>
+        ) : null}
+
         {toast ? (
-          <div className={`admin-toast ${toast.type === "ok" ? "is-ok" : "is-err"}`}>
-            {toast.text}
+          <div
+            className={`admin-toast admin-course-toast ${toast.type === "ok" ? "is-ok" : "is-err"}`}
+            role={toast.type === "ok" ? "status" : "alert"}
+            aria-live={toast.type === "ok" ? "polite" : "assertive"}
+            aria-atomic="true"
+          >
+            <span className="admin-course-toast-icon" aria-hidden="true">
+              {toast.type === "ok" ? "✓" : "!"}
+            </span>
+            <span className="admin-course-toast-copy">
+              <strong>{toast.type === "ok" ? "操作成功" : "操作未完成"}</strong>
+              <span>{toast.text}</span>
+            </span>
+            <button type="button" onClick={dismissToast} aria-label="关闭提示">×</button>
           </div>
         ) : null}
 
@@ -328,8 +523,8 @@ export function AdminCoursesPage() {
               绑定飞书文档或知识库链接。站内会优先嵌入；wiki 会自动解析为云文档。请开通 wiki:wiki:readonly（若用知识库），并把应用加为协作者。
             </p>
           </div>
-          <button type="button" className="admin-ghost-btn" onClick={() => void load()}>
-            刷新
+          <button type="button" className="admin-ghost-btn" disabled={loading || refreshing} onClick={() => void refreshCourses()}>
+            {loading || refreshing ? "刷新中…" : "刷新"}
           </button>
         </header>
 
@@ -345,7 +540,7 @@ export function AdminCoursesPage() {
               <p>填写展示信息、上传封面并绑定课程文档，保存后立即同步到课程页。</p>
             </div>
             {editingId ? (
-              <button type="button" className="admin-editor-cancel" onClick={() => resetForm()}>
+              <button type="button" className="admin-editor-cancel" onClick={cancelEdit}>
                 取消修改
               </button>
             ) : null}
@@ -491,30 +686,37 @@ export function AdminCoursesPage() {
           </div>
 
           <div className="admin-editor-actions">
-            <div><strong>{editingId ? "正在修改已有课程" : "准备发布一门新课程"}</strong><small>封面会转为 WEBP 并上传至课程专用存储桶。</small></div>
+            <div>
+              <strong>{editingId ? "正在修改已有课程" : "准备发布一门新课程"}</strong>
+              <small>
+                {hasUnsavedChanges ? <span className="admin-unsaved-state">存在未保存更改</span> : "所有更改均已保存"}
+                {" · 封面会转为 WEBP 并上传至课程专用存储桶。"}
+              </small>
+            </div>
             <button type="submit" className="admin-editor-submit" disabled={submitting || uploading || activeCategories.length === 0}>
               {submitting ? "保存中…" : editingId ? "保存修改" : "创建并上传课程"}
             </button>
           </div>
         </form>
 
-        {message ? (
-          <p className="admin-flash is-ok mt-12" role="status">
-            {message}
-          </p>
-        ) : null}
-        {error ? (
+        {formError ? (
           <div className="admin-flash is-err mt-12" role="alert">
-            <span>{error}</span>
-            <button type="button" onClick={() => void load()}>
-              重试
+            <span>{formError}</span>
+          </div>
+        ) : null}
+
+        {loadError ? (
+          <div className="admin-flash is-err mt-12" role="alert">
+            <span>{loadError}</span>
+            <button type="button" disabled={refreshing} onClick={() => void refreshCourses()}>
+              {refreshing ? "重试中…" : "重新加载"}
             </button>
           </div>
         ) : null}
 
         {loading ? <p className="admin-status-inline">加载课程中…</p> : null}
 
-        {!loading && courses.length === 0 && !error ? (
+        {!loading && courses.length === 0 && !loadError ? (
           <p className="admin-empty">还没有课程，先在上方创建一个吧。</p>
         ) : null}
 
@@ -562,10 +764,21 @@ export function AdminCoursesPage() {
                       </div>
                     </div>
                     <div className="admin-course-manage-actions">
-                      <button type="button" className="admin-action-primary" onClick={() => startEdit(c)}>修改详情</button>
-                      <button type="button" onClick={() => void toggleMemberOnly(c)}>{c.is_member_only ? "改为公开" : "设为会员"}</button>
-                      <Link href={`/learning/course?id=${c.id}`}>前台预览</Link>
-                      <button type="button" className="is-danger" onClick={() => void onDelete(c.id)}>删除</button>
+                      <button type="button" className="admin-action-primary" disabled={Boolean(pendingCourseActions[c.id])} onClick={() => startEdit(c)}>修改详情</button>
+                      <button type="button" disabled={Boolean(pendingCourseActions[c.id])} onClick={() => void toggleMemberOnly(c)}>
+                        {pendingCourseActions[c.id] === "access"
+                          ? "更新中…"
+                          : c.is_member_only ? "改为公开" : "设为会员"}
+                      </button>
+                      <button type="button" disabled={Boolean(pendingCourseActions[c.id])} onClick={() => void togglePublished(c)}>
+                        {pendingCourseActions[c.id] === "publish" ? "处理中…" : c.is_published ? "下架" : "发布"}
+                      </button>
+                      <Link href={`/learning/course?id=${c.id}`} target="_blank" rel="noopener noreferrer">前台预览 ↗</Link>
+                      <div className="admin-course-danger-zone">
+                        <button type="button" className="is-danger" disabled={Boolean(pendingCourseActions[c.id])} onClick={() => setCourseToDelete(c)}>
+                          删除课程
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </article>
